@@ -17,9 +17,9 @@
     </testsuites>
     <php>
         <env name="APP_ENV" value="testing"/>
-        <env name="DB_POSTGRES_HOST" value="postgres"/>
+        <env name="DB_POSTGRES_HOST" value="php-db-locker-postgres"/>
         <env name="DB_POSTGRES_PORT" value="5432"/>
-        <env name="DB_POSTGRES_USER" value="root"/>
+        <env name="DB_POSTGRES_USERNAME" value="root"/>
         <env name="DB_POSTGRES_PASSWORD" value="secret"/>
         <env name="DB_POSTGRES_DATABASE" value="php_db_locker"/>
     </php>
