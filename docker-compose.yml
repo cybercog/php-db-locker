@@ -1,0 +1,41 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: php-db-locker-app
+    image: php-db-locker-app
+    build:
+      context: ./
+      dockerfile: ./.docker/php/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    working_dir: /app
+    volumes:
+      - ./:/app
+      - ./.docker/php/www.conf:/usr/local/etc/php-fpm.d/www.conf:ro
+    networks:
+      - php-db-locker
+
+  postgres:
+    container_name: php-db-locker-postgres
+    image: postgres:13.4-alpine
+    restart: unless-stopped
+    ports:
+      - "${DB_POSTGRES_PORT:-5432}:${DB_POSTGRES_PORT:-5432}"
+    environment:
+      - POSTGRES_USER=${DB_POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${DB_POSTGRES_PASSWORD}
+      - POSTGRES_DB=${DB_POSTGRES_DATABASE}
+    volumes:
+      - ./.docker-volume-postgres:/var/lib/postgresql/data
+    networks:
+      - php-db-locker
+
+volumes:
+  .docker-volume-postgres:
+    driver: local
+
+networks:
+  php-db-locker:
+    driver: bridge
