@@ -149,6 +149,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
             <<<SQL
                 SELECT pg_terminate_backend(pid) 
                 FROM pg_stat_activity
+                WHERE pid <> pg_backend_pid()
             SQL
         );
     }
