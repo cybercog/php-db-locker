@@ -147,7 +147,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     {
         $this->createPostgresPdoConnection()->query(
             <<<SQL
-                SELECT pg_terminate_backend(pid) 
+                SELECT pg_cancel_backend(pid) 
                 FROM pg_stat_activity
             SQL
         );
