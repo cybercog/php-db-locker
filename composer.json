@@ -1,6 +1,6 @@
 {
     "name": "cybercog/php-db-locker",
-    "description": "Database Locking application-level mechanisms",
+    "description": "PHP application-level database locking mechanisms",
     "type": "library",
     "license": "MIT",
     "keywords": [
@@ -10,7 +10,8 @@
         "database",
         "db",
         "advisory",
-        "lock"
+        "lock",
+        "mutex"
     ],
     "authors": [
         {
