@@ -21,7 +21,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 {
     protected function tearDown(): void
     {
-        $this->closeAllDbConnections();
+        $this->closeAllPostgresPdoConnections();
 
         parent::tearDown();
     }
@@ -143,7 +143,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         return $statement->fetchAll(PDO::FETCH_OBJ);
     }
 
-    private function closeAllDbConnections(): void
+    private function closeAllPostgresPdoConnections(): void
     {
         $this->createPostgresPdoConnection()->query(
             <<<SQL
