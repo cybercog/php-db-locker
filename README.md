@@ -52,7 +52,6 @@ if ($isLockAcquired) {
 }
 $postgresLocker->releaseLock($dbConnection, $postgresLockId);
 ```
-```
 
 ## Changelog
 
