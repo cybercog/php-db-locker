@@ -17,7 +17,7 @@ use InvalidArgumentException;
 
 final class PostgresLockId
 {
-    private const MIN_DB_INT_VALUE = PHP_INT_MIN;
+    private const MIN_DB_INT_VALUE = 0;
     private const MAX_DB_INT_VALUE = PHP_INT_MAX;
 
     private int $id;
