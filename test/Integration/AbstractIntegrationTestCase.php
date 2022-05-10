@@ -22,15 +22,15 @@ abstract class AbstractIntegrationTestCase extends TestCase
     protected function createPostgresPdoConnection(): PDO
     {
         $dsn = implode(';', [
-            'dbname=' . $_ENV['DB_POSTGRES_DATABASE'],
-            'host=' . $_ENV['DB_POSTGRES_HOST'],
-            'port=' . $_ENV['DB_POSTGRES_PORT'],
+            'dbname=' . getenv('DB_POSTGRES_DATABASE'),
+            'host=' . getenv('DB_POSTGRES_HOST'),
+            'port=' . getenv('DB_POSTGRES_PORT'),
         ]);
 
         return new PDO(
             'pgsql:' . $dsn,
-            $_ENV['DB_POSTGRES_USERNAME'],
-            $_ENV['DB_POSTGRES_PASSWORD'],
+            getenv('DB_POSTGRES_USERNAME'),
+            getenv('DB_POSTGRES_PASSWORD'),
         );
     }
 
