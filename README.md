@@ -16,7 +16,43 @@ composer require cybercog/php-db-locker
 
 ## Usage
 
-> TODO: Write usage
+### Postgres
+
+#### Transaction-level advisory lock
+
+```php
+$dbConnection = new PDO($dsn, $username, $password);
+
+$postgresLocker = new PostgresAdvisoryLocker();
+$postgresLockId = PostgresLockId::fromLockId(new LockId('user', '4'));
+
+$dbConnection->beginTransaction();
+$isLockAcquired = $postgresLocker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
+if ($isLockAcquired) {
+    // Execute logic if lock was successful
+} else {
+    // Execute logic if lock acquisition has been failed
+}
+$dbConnection->commit();
+```
+
+#### Session-level advisory lock
+
+```php
+$dbConnection = new PDO($dsn, $username, $password);
+
+$postgresLocker = new PostgresAdvisoryLocker();
+$postgresLockId = PostgresLockId::fromLockId(new LockId('user', '4'));
+
+$isLockAcquired = $postgresLocker->acquireLock($dbConnection, $postgresLockId);
+if ($isLockAcquired) {
+    // Execute logic if lock was successful
+} else {
+    // Execute logic if lock acquisition has been failed
+}
+$postgresLocker->releaseLock($dbConnection, $postgresLockId);
+```
+```
 
 ## Changelog
 
