@@ -26,6 +26,10 @@ Detailed changes for each release are documented in the [CHANGELOG.md](https://g
 
 - `PHP DB Locker` package is open-sourced software licensed under the [MIT license](LICENSE) by [Anton Komarev].
 
+## 🌟 Stargazers over time
+
+[![Stargazers over time](https://chart.yhype.me/github/repository-star/v1/R_kgDOHTpXAg.svg)](https://yhype.me?utm_source=github&utm_medium=cybercog-php-db-locker&utm_content=chart-repository-star-cumulative)
+
 ## About CyberCog
 
 [CyberCog] is a Social Unity of enthusiasts. Research the best solutions in product & software development is our passion.
