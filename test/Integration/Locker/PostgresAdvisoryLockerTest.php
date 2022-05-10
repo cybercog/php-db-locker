@@ -21,12 +21,43 @@ use LogicException;
 
 final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 {
+    private const MIN_DB_INT_VALUE = 0;
+    private const MAX_DB_INT_VALUE = PHP_INT_MAX;
+
     /** @test */
     public function it_can_acquire_lock(): void
     {
         $locker = $this->createLocker();
         $dbConnection = $this->createPostgresPdoConnection();
         $postgresLockId = $this->createPostgresLockId('test');
+
+        $isLockAcquired = $locker->acquireLock($dbConnection, $postgresLockId);
+
+        $this->assertTrue($isLockAcquired);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
+        $this->assertPgAdvisoryLocksCount(1);
+    }
+
+    /** @test */
+    public function it_can_acquire_lock_with_smallest_lock_id(): void
+    {
+        $locker = $this->createLocker();
+        $dbConnection = $this->createPostgresPdoConnection();
+        $postgresLockId = new PostgresLockId(self::MIN_DB_INT_VALUE);
+
+        $isLockAcquired = $locker->acquireLock($dbConnection, $postgresLockId);
+
+        $this->assertTrue($isLockAcquired);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
+        $this->assertPgAdvisoryLocksCount(1);
+    }
+
+    /** @test */
+    public function it_can_acquire_lock_with_biggest_lock_id(): void
+    {
+        $locker = $this->createLocker();
+        $dbConnection = $this->createPostgresPdoConnection();
+        $postgresLockId = new PostgresLockId(self::MAX_DB_INT_VALUE);
 
         $isLockAcquired = $locker->acquireLock($dbConnection, $postgresLockId);
 
