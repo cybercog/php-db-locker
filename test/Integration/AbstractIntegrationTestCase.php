@@ -19,6 +19,13 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractIntegrationTestCase extends TestCase
 {
+    protected function tearDown(): void
+    {
+        $this->closeAllDbConnections();
+
+        parent::tearDown();
+    }
+
     protected function createPostgresPdoConnection(): PDO
     {
         $dsn = implode(';', [
@@ -134,5 +141,15 @@ abstract class AbstractIntegrationTestCase extends TestCase
         $statement->execute();
 
         return $statement->fetchAll(PDO::FETCH_OBJ);
+    }
+
+    private function closeAllDbConnections(): void
+    {
+        $this->createPostgresPdoConnection()->query(
+            <<<SQL
+                SELECT pg_terminate_backend(pid) 
+                FROM pg_stat_activity
+            SQL
+        );
     }
 }
