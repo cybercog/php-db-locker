@@ -19,11 +19,11 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractIntegrationTestCase extends TestCase
 {
-    protected function tearDown(): void
+    protected function setUp(): void
     {
-        $this->closeAllPostgresPdoConnections();
+        parent::setUp();
 
-        parent::tearDown();
+        $this->closeAllPostgresPdoConnections();
     }
 
     protected function createPostgresPdoConnection(): PDO
@@ -147,7 +147,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     {
         $this->createPostgresPdoConnection()->query(
             <<<SQL
-                SELECT pg_cancel_backend(pid) 
+                SELECT pg_terminate_backend(pid) 
                 FROM pg_stat_activity
             SQL
         );
