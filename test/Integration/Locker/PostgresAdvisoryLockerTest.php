@@ -310,19 +310,47 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     }
 
     /** @test */
-    public function it_can_auto_release_lock_acquired_within_transaction(): void
+    public function it_can_auto_release_lock_acquired_within_transaction_on_commit(): void
     {
         $locker = $this->createLocker();
         $dbConnection = $this->createPostgresPdoConnection();
         $postgresLockId = $this->createPostgresLockId('test');
         $dbConnection->beginTransaction();
+        $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
 
-        $isLockAcquired = $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
         $dbConnection->commit();
 
-        $this->assertTrue($isLockAcquired);
         $this->assertPgAdvisoryLocksCount(0);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $postgresLockId);
+    }
+
+    /** @test */
+    public function it_can_auto_release_lock_acquired_within_transaction_on_rollback(): void
+    {
+        $locker = $this->createLocker();
+        $dbConnection = $this->createPostgresPdoConnection();
+        $postgresLockId = $this->createPostgresLockId('test');
+        $dbConnection->beginTransaction();
+        $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
+
+        $dbConnection->rollBack();
+
+        $this->assertPgAdvisoryLocksCount(0);
+        $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $postgresLockId);
+    }
+
+    /** @test */
+    public function it_can_auto_release_lock_acquired_within_transaction_on_connection_kill(): void
+    {
+        $locker = $this->createLocker();
+        $dbConnection = $this->createPostgresPdoConnection();
+        $postgresLockId = $this->createPostgresLockId('test');
+        $dbConnection->beginTransaction();
+        $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
+
+        $dbConnection = null;
+
+        $this->assertPgAdvisoryLocksCount(0);
     }
 
     /** @test */
