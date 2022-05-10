@@ -19,6 +19,8 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractIntegrationTestCase extends TestCase
 {
+    private const POSTGRES_BLOCK_SIZE = 4294967296;
+
     protected function tearDown(): void
     {
         $this->closeAllPostgresPdoConnections();
@@ -100,19 +102,26 @@ abstract class AbstractIntegrationTestCase extends TestCase
         PDO $dbConnection,
         PostgresLockId $postgresLockId
     ): ?object {
+        $id = $postgresLockId->id();
+
+        $lockObjectId = $id % self::POSTGRES_BLOCK_SIZE;
+        $lockCatalogId = ($id - $lockObjectId) / self::POSTGRES_BLOCK_SIZE;
+
         $statement = $dbConnection->prepare(
             <<<SQL
                 SELECT *
                 FROM pg_locks
                 WHERE locktype = 'advisory'
-                AND objid = :lock_id
+                AND classid = :lock_catalog_id
+                AND objid = :lock_object_id
                 AND pid = :connection_pid
                 AND mode = 'ExclusiveLock'
             SQL
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id(),
+                'lock_catalog_id' => $lockCatalogId,
+                'lock_object_id' => $lockObjectId,
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
             ]
         );

@@ -17,8 +17,8 @@ use InvalidArgumentException;
 
 final class PostgresLockId
 {
-    private const MIN_INT_DB_VALUE = -2147483648;
-    private const MAX_INT_DB_VALUE = 2147483647;
+    private const MIN_DB_INT_VALUE = PHP_INT_MIN;
+    private const MAX_DB_INT_VALUE = PHP_INT_MAX;
 
     private int $id;
 
@@ -31,10 +31,10 @@ final class PostgresLockId
         $this->id = $id;
         $this->humanReadableValue = $humanReadableValue;
 
-        if ($id < self::MIN_INT_DB_VALUE) {
+        if ($id < self::MIN_DB_INT_VALUE) {
             throw new InvalidArgumentException('Out of bound exception (id is too small)');
         }
-        if ($id > self::MAX_INT_DB_VALUE) {
+        if ($id > self::MAX_DB_INT_VALUE) {
             throw new InvalidArgumentException('Out of bound exception (id is too big)');
         }
     }
@@ -49,19 +49,13 @@ final class PostgresLockId
         return $this->humanReadableValue;
     }
 
-    /**
-     * crc32 returns value from 0 to 4294967295 in x64 systems.
-     * Postgres int range from -2147483648 to 2147483647.
-     *
-     * TODO: Recheck it https://www.postgresql.org/docs/14/functions-admin.html#FUNCTIONS-ADVISORY-LOCKS
-     */
     public static function fromLockId(
         LockId $lockId
     ): self {
         $humanReadableValue = (string)$lockId;
 
         return new self(
-            crc32($humanReadableValue) - (self::MAX_INT_DB_VALUE + 1),
+            crc32($humanReadableValue),
             $humanReadableValue
         );
     }
