@@ -1,5 +1,7 @@
 # PHP DB Locker
 
+![cog-php-db-locker](https://user-images.githubusercontent.com/1849174/167773585-171bef35-8e6d-461c-b1b1-ad9d2b07290a.png)
+
 > TODO: Write introduction
 
 Supported drivers:
