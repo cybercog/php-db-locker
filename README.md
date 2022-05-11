@@ -2,6 +2,13 @@
 
 ![cog-php-db-locker](https://user-images.githubusercontent.com/1849174/167773585-171bef35-8e6d-461c-b1b1-ad9d2b07290a.png)
 
+<p align="center">
+    <a href="https://github.com/cybercog/php-db-locker/releases"><img src="https://img.shields.io/github/release/cybercog/php-db-locker.svg?style=flat-square" alt="Releases"></a>
+    <a href="https://github.com/cybercog/php-db-locker/blob/master/LICENSE"><img src="https://img.shields.io/github/license/cybercog/php-db-locker.svg?style=flat-square" alt="License"></a>
+</p>
+
+## Introduction
+
 > TODO: Write introduction
 
 Supported drivers:
