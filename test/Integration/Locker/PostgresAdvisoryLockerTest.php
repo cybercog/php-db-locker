@@ -274,7 +274,6 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertTrue($isLockAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
-        $this->assertPgAdvisoryLockExistsInTransaction($dbConnection, $postgresLockId);
     }
 
     /** @test */

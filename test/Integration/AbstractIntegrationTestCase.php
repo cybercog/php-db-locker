@@ -57,20 +57,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
         );
     }
 
-    protected function assertPgAdvisoryLockExistsInTransaction(
-        PDO $dbConnection,
-        PostgresLockId $postgresLockId
-    ): void {
-        $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
-
-        $lockIdString = $postgresLockId->humanReadableValue();
-
-        $this->assertTrue(
-            $row !== null,
-            "Lock id `$lockIdString` does not exists"
-        );
-    }
-
     protected function assertPgAdvisoryLockMissingInConnection(
         PDO $dbConnection,
         PostgresLockId $postgresLockId
