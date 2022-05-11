@@ -9,7 +9,7 @@
 
 ## Introduction
 
-> TODO: Write introduction
+PHP application-level database locking mechanisms to implement concurrency control patterns.
 
 Supported drivers:
 
