@@ -25,7 +25,7 @@ final class PostgresAdvisoryLocker
     ): bool {
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT pg_try_advisory_lock(:lock_id);
+            SELECT pg_try_advisory_lock(:lock_id);
             SQL
         );
         $statement->execute(
@@ -51,7 +51,7 @@ final class PostgresAdvisoryLocker
 
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT pg_try_advisory_xact_lock(:lock_id);
+            SELECT pg_try_advisory_xact_lock(:lock_id);
             SQL
         );
         $statement->execute(
@@ -69,7 +69,7 @@ final class PostgresAdvisoryLocker
     ): bool {
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT pg_advisory_unlock(:lock_id);
+            SELECT pg_advisory_unlock(:lock_id);
             SQL
         );
         $statement->execute(
@@ -86,7 +86,7 @@ final class PostgresAdvisoryLocker
     ): void {
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT pg_advisory_unlock_all();
+            SELECT pg_advisory_unlock_all();
             SQL
         );
         $statement->execute();
