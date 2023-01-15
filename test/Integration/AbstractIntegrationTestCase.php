@@ -95,13 +95,13 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT *
-                FROM pg_locks
-                WHERE locktype = 'advisory'
-                AND classid = :lock_catalog_id
-                AND objid = :lock_object_id
-                AND pid = :connection_pid
-                AND mode = 'ExclusiveLock'
+            SELECT *
+            FROM pg_locks
+            WHERE locktype = 'advisory'
+            AND classid = :lock_catalog_id
+            AND objid = :lock_object_id
+            AND pid = :connection_pid
+            AND mode = 'ExclusiveLock'
             SQL
         );
         $statement->execute(
@@ -127,10 +127,10 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT *
-                FROM pg_locks
-                WHERE locktype = 'advisory'
-                AND mode = 'ExclusiveLock'
+            SELECT *
+            FROM pg_locks
+            WHERE locktype = 'advisory'
+            AND mode = 'ExclusiveLock'
             SQL
         );
         $statement->execute();
@@ -142,9 +142,9 @@ abstract class AbstractIntegrationTestCase extends TestCase
     {
         $this->createPostgresPdoConnection()->query(
             <<<SQL
-                SELECT pg_terminate_backend(pid) 
-                FROM pg_stat_activity
-                WHERE pid <> pg_backend_pid()
+            SELECT pg_terminate_backend(pid) 
+            FROM pg_stat_activity
+            WHERE pid <> pg_backend_pid()
             SQL
         );
     }

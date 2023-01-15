@@ -14,10 +14,10 @@ declare(strict_types=1);
 namespace Cog\Test\DbLocker\Unit\LockId;
 
 use Cog\DbLocker\LockId\LockId;
-use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 use InvalidArgumentException;
+use PHPUnit\Framework\TestCase;
 
-final class LockIdTest extends AbstractUnitTestCase
+final class LockIdTest extends TestCase
 {
     /** @test */
     public function it_can_create_lock_id(): void

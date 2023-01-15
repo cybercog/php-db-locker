@@ -20,7 +20,7 @@ use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 final class PostgresLockIdTest extends AbstractUnitTestCase
 {
     private const MIN_DB_INT_VALUE = 0;
-    private const MAX_DB_INT_VALUE = PHP_INT_MAX;
+    private const MAX_DB_INT_VALUE = 9223372036854775807;
 
     /** @test */
     public function it_can_create_postgres_lock_id_with_min_id(): void

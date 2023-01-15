@@ -22,7 +22,7 @@ use LogicException;
 final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 {
     private const MIN_DB_INT_VALUE = 0;
-    private const MAX_DB_INT_VALUE = PHP_INT_MAX;
+    private const MAX_DB_INT_VALUE = 9223372036854775807;
 
     /** @test */
     public function it_can_acquire_lock(): void
