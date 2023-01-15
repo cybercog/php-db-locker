@@ -21,6 +21,9 @@ abstract class AbstractIntegrationTestCase extends TestCase
 {
     private const POSTGRES_BLOCK_SIZE = 4294967296;
 
+    private const MODE_EXCLUSIVE = 'ExclusiveLock';
+    private const MODE_SHARE = 'ShareLock';
+
     protected function tearDown(): void
     {
         $this->closeAllPostgresPdoConnections();
@@ -101,7 +104,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
             AND classid = :lock_catalog_id
             AND objid = :lock_object_id
             AND pid = :connection_pid
-            AND mode = 'ExclusiveLock'
+            AND mode = :mode
             SQL
         );
         $statement->execute(
@@ -109,6 +112,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 'lock_catalog_id' => $lockCatalogId,
                 'lock_object_id' => $lockObjectId,
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
+                'mode' => self::MODE_EXCLUSIVE,
             ]
         );
 
@@ -130,10 +134,14 @@ abstract class AbstractIntegrationTestCase extends TestCase
             SELECT *
             FROM pg_locks
             WHERE locktype = 'advisory'
-            AND mode = 'ExclusiveLock'
+            AND mode = :mode
             SQL
         );
-        $statement->execute();
+        $statement->execute(
+            [
+                'mode' => self::MODE_EXCLUSIVE,
+            ]
+        );
 
         return $statement->fetchAll(PDO::FETCH_OBJ);
     }
