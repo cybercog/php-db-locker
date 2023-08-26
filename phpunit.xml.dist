@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/9.3/phpunit.xsd"
-         bootstrap="vendor/autoload.php"
-         colors="true"
-         stopOnFailure="false"
+<phpunit
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:noNamespaceSchemaLocation="https://schema.phpunit.de/10.3/phpunit.xsd"
+        bootstrap="vendor/autoload.php"
+        colors="true"
+        stopOnFailure="false"
+        cacheDirectory=".phpunit.cache"
 >
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory suffix=".php">./src</directory>
-        </include>
-    </coverage>
+    <coverage/>
     <testsuites>
         <testsuite name="Unit">
             <directory suffix="Test.php">./test</directory>
@@ -23,4 +21,9 @@
         <env name="DB_POSTGRES_PASSWORD" value="secret"/>
         <env name="DB_POSTGRES_DATABASE" value="php_db_locker"/>
     </php>
+    <source>
+        <include>
+            <directory suffix=".php">./src</directory>
+        </include>
+    </source>
 </phpunit>

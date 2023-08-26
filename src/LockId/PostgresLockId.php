@@ -17,36 +17,20 @@ use InvalidArgumentException;
 
 final class PostgresLockId
 {
-    private const MIN_DB_INT_VALUE = 0;
-    private const MAX_DB_INT_VALUE = 9223372036854775807;
-
-    private int $id;
-
-    private string $humanReadableValue;
+    private const DB_INT_VALUE_MIN = 0;
+    private const DB_INT_VALUE_MAX = 9223372036854775807;
+    private const DB_INT32_VALUE_MAX = 2147483647;
 
     public function __construct(
-        int $id,
-        string $humanReadableValue = ''
+        public readonly int $id,
+        public readonly string $humanReadableValue = '',
     ) {
-        $this->id = $id;
-        $this->humanReadableValue = $humanReadableValue;
-
-        if ($id < self::MIN_DB_INT_VALUE) {
+        if ($id < self::DB_INT_VALUE_MIN) {
             throw new InvalidArgumentException('Out of bound exception (id is too small)');
         }
-        if ($id > self::MAX_DB_INT_VALUE) {
+        if ($id > self::DB_INT_VALUE_MAX) {
             throw new InvalidArgumentException('Out of bound exception (id is too big)');
         }
-    }
-
-    public function id(): int
-    {
-        return $this->id;
-    }
-
-    public function humanReadableValue(): string
-    {
-        return $this->humanReadableValue;
     }
 
     public static function fromLockId(
@@ -55,8 +39,14 @@ final class PostgresLockId
         $humanReadableValue = (string)$lockId;
 
         return new self(
-            crc32($humanReadableValue),
+            self::generateIdFromString($humanReadableValue),
             $humanReadableValue
         );
+    }
+
+    private static function generateIdFromString(
+        string $string,
+    ): int {
+        return crc32($string);
     }
 }

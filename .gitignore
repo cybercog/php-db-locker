@@ -1,5 +1,6 @@
 /.docker-volume-postgres
 /.idea
+/.phpunit.cache
 /vendor
 .DS_STORE
 .phpunit.result.cache

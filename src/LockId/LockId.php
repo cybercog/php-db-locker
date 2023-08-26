@@ -17,17 +17,10 @@ use InvalidArgumentException;
 
 final class LockId
 {
-    private string $key;
-
-    private string $value;
-
     public function __construct(
-        string $key,
-        string $value = ''
+        public readonly string $key,
+        public readonly string $value = '',
     ) {
-        $this->key = $key;
-        $this->value = $value;
-
         if ($key === '') {
             throw new InvalidArgumentException('LockId key is empty');
         }

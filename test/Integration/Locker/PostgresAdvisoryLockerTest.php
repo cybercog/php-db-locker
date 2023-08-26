@@ -24,12 +24,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     private const MIN_DB_INT_VALUE = 0;
     private const MAX_DB_INT_VALUE = 9223372036854775807;
 
-    /** @test */
-    public function it_can_acquire_lock(): void
+    public function test_it_can_acquire_lock(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
 
         $isLockAcquired = $locker->acquireLock($dbConnection, $postgresLockId);
 
@@ -38,11 +37,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    /** @test */
-    public function it_can_acquire_lock_with_smallest_lock_id(): void
+    public function test_it_can_acquire_lock_with_smallest_lock_id(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
         $postgresLockId = new PostgresLockId(self::MIN_DB_INT_VALUE);
 
         $isLockAcquired = $locker->acquireLock($dbConnection, $postgresLockId);
@@ -52,11 +50,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    /** @test */
-    public function it_can_acquire_lock_with_biggest_lock_id(): void
+    public function test_it_can_acquire_lock_with_biggest_lock_id(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
         $postgresLockId = new PostgresLockId(self::MAX_DB_INT_VALUE);
 
         $isLockAcquired = $locker->acquireLock($dbConnection, $postgresLockId);
@@ -66,12 +63,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    /** @test */
-    public function it_can_acquire_lock_in_same_connection_only_once(): void
+    public function test_it_can_acquire_lock_in_same_connection_only_once(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
 
         $isLockAcquired1 = $locker->acquireLock($dbConnection, $postgresLockId);
         $isLockAcquired2 = $locker->acquireLock($dbConnection, $postgresLockId);
@@ -82,13 +78,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    /** @test */
-    public function it_can_acquire_multiple_locks_in_one_connection(): void
+    public function test_it_can_acquire_multiple_locks_in_one_connection(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId1 = $this->createPostgresLockId('test1');
-        $postgresLockId2 = $this->createPostgresLockId('test2');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId1 = $this->initPostgresLockId('test1');
+        $postgresLockId2 = $this->initPostgresLockId('test2');
 
         $isLock1Acquired = $locker->acquireLock($dbConnection, $postgresLockId1);
         $isLock2Acquired = $locker->acquireLock($dbConnection, $postgresLockId2);
@@ -100,13 +95,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(2);
     }
 
-    /** @test */
-    public function it_cannot_acquire_same_lock_in_two_connections(): void
+    public function test_it_cannot_acquire_same_lock_in_two_connections(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection1 = $this->createPostgresPdoConnection();
-        $dbConnection2 = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $locker->acquireLock($dbConnection1, $postgresLockId);
 
         $isLockAcquired = $locker->acquireLock($dbConnection2, $postgresLockId);
@@ -116,12 +110,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection2, $postgresLockId);
     }
 
-    /** @test */
-    public function it_can_release_lock(): void
+    public function test_it_can_release_lock(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $locker->acquireLock($dbConnection, $postgresLockId);
 
         $isLockReleased = $locker->releaseLock($dbConnection, $postgresLockId);
@@ -130,12 +123,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(0);
     }
 
-    /** @test */
-    public function it_can_release_lock_twice_if_acquired_twice(): void
+    public function test_it_can_release_lock_twice_if_acquired_twice(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $locker->acquireLock($dbConnection, $postgresLockId);
         $locker->acquireLock($dbConnection, $postgresLockId);
 
@@ -147,13 +139,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(0);
     }
 
-    /** @test */
-    public function it_can_acquire_lock_in_second_connection_after_release(): void
+    public function test_it_can_acquire_lock_in_second_connection_after_release(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection1 = $this->createPostgresPdoConnection();
-        $dbConnection2 = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $locker->acquireLock($dbConnection1, $postgresLockId);
         $locker->releaseLock($dbConnection1, $postgresLockId);
 
@@ -164,13 +155,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    /** @test */
-    public function it_cannot_acquire_lock_in_second_connection_after_one_release_twice_locked(): void
+    public function test_it_cannot_acquire_lock_in_second_connection_after_one_release_twice_locked(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection1 = $this->createPostgresPdoConnection();
-        $dbConnection2 = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $locker->acquireLock($dbConnection1, $postgresLockId);
         $locker->acquireLock($dbConnection1, $postgresLockId);
 
@@ -184,12 +174,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection2, $postgresLockId);
     }
 
-    /** @test */
-    public function it_cannot_release_lock_if_not_acquired(): void
+    public function test_it_cannot_release_lock_if_not_acquired(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
 
         $isLockReleased = $locker->releaseLock($dbConnection, $postgresLockId);
 
@@ -197,13 +186,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(0);
     }
 
-    /** @test */
-    public function it_cannot_release_lock_if_acquired_in_other_connection(): void
+    public function test_it_cannot_release_lock_if_acquired_in_other_connection(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection1 = $this->createPostgresPdoConnection();
-        $dbConnection2 = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $locker->acquireLock($dbConnection1, $postgresLockId);
 
         $isLockReleased = $locker->releaseLock($dbConnection2, $postgresLockId);
@@ -213,13 +201,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    /** @test */
-    public function it_can_release_all_locks_in_connection(): void
+    public function test_it_can_release_all_locks_in_connection(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId1 = $this->createPostgresLockId('test');
-        $postgresLockId2 = $this->createPostgresLockId('test2');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId1 = $this->initPostgresLockId('test');
+        $postgresLockId2 = $this->initPostgresLockId('test2');
         $locker->acquireLock($dbConnection, $postgresLockId1);
         $locker->acquireLock($dbConnection, $postgresLockId2);
 
@@ -228,27 +215,25 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(0);
     }
 
-    /** @test */
-    public function it_can_release_all_locks_in_connection_if_no_locks_were_acquired(): void
+    public function test_it_can_release_all_locks_in_connection_if_no_locks_were_acquired(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
 
         $locker->releaseAllLocks($dbConnection);
 
         $this->assertPgAdvisoryLocksCount(0);
     }
 
-    /** @test */
-    public function it_can_release_all_locks_in_connection_but_keeps_other_locks(): void
+    public function test_it_can_release_all_locks_in_connection_but_keeps_other_locks(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection1 = $this->createPostgresPdoConnection();
-        $dbConnection2 = $this->createPostgresPdoConnection();
-        $postgresLockId1 = $this->createPostgresLockId('test');
-        $postgresLockId2 = $this->createPostgresLockId('test2');
-        $postgresLockId3 = $this->createPostgresLockId('test3');
-        $postgresLockId4 = $this->createPostgresLockId('test4');
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $postgresLockId1 = $this->initPostgresLockId('test');
+        $postgresLockId2 = $this->initPostgresLockId('test2');
+        $postgresLockId3 = $this->initPostgresLockId('test3');
+        $postgresLockId4 = $this->initPostgresLockId('test4');
         $locker->acquireLock($dbConnection1, $postgresLockId1);
         $locker->acquireLock($dbConnection1, $postgresLockId2);
         $locker->acquireLock($dbConnection2, $postgresLockId3);
@@ -261,12 +246,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $postgresLockId4);
     }
 
-    /** @test */
-    public function it_can_acquire_lock_within_transaction(): void
+    public function test_it_can_acquire_lock_within_transaction(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $dbConnection->beginTransaction();
 
         $isLockAcquired = $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
@@ -276,28 +260,26 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
     }
 
-    /** @test */
-    public function it_cannot_acquire_lock_within_transaction_not_in_transaction(): void
+    public function test_it_cannot_acquire_lock_within_transaction_not_in_transaction(): void
     {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(
             "Transaction-level advisory lock `test` cannot be acquired outside of transaction"
         );
 
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
 
         $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
     }
 
-    /** @test */
-    public function it_cannot_acquire_lock_in_second_connection_if_taken_within_transaction(): void
+    public function test_it_cannot_acquire_lock_in_second_connection_if_taken_within_transaction(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection1 = $this->createPostgresPdoConnection();
-        $dbConnection2 = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $dbConnection1->beginTransaction();
         $locker->acquireLockWithinTransaction($dbConnection1, $postgresLockId);
 
@@ -308,12 +290,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $postgresLockId);
     }
 
-    /** @test */
-    public function it_can_auto_release_lock_acquired_within_transaction_on_commit(): void
+    public function test_it_can_auto_release_lock_acquired_within_transaction_on_commit(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $dbConnection->beginTransaction();
         $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
 
@@ -323,12 +304,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $postgresLockId);
     }
 
-    /** @test */
-    public function it_can_auto_release_lock_acquired_within_transaction_on_rollback(): void
+    public function test_it_can_auto_release_lock_acquired_within_transaction_on_rollback(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $dbConnection->beginTransaction();
         $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
 
@@ -338,12 +318,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $postgresLockId);
     }
 
-    /** @test */
-    public function it_can_auto_release_lock_acquired_within_transaction_on_connection_kill(): void
+    public function test_it_can_auto_release_lock_acquired_within_transaction_on_connection_kill(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $dbConnection->beginTransaction();
         $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
 
@@ -352,12 +331,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(0);
     }
 
-    /** @test */
-    public function it_cannot_release_lock_acquired_within_transaction(): void
+    public function test_it_cannot_release_lock_acquired_within_transaction(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId = $this->createPostgresLockId('test');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = $this->initPostgresLockId('test');
         $dbConnection->beginTransaction();
         $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
 
@@ -368,13 +346,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
     }
 
-    /** @test */
-    public function it_cannot_release_all_locks_acquired_within_transaction(): void
+    public function test_it_cannot_release_all_locks_acquired_within_transaction(): void
     {
-        $locker = $this->createLocker();
-        $dbConnection = $this->createPostgresPdoConnection();
-        $postgresLockId1 = $this->createPostgresLockId('test');
-        $postgresLockId2 = $this->createPostgresLockId('test2');
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId1 = $this->initPostgresLockId('test');
+        $postgresLockId2 = $this->initPostgresLockId('test2');
         $locker->acquireLock($dbConnection, $postgresLockId1);
         $dbConnection->beginTransaction();
         $locker->acquireLockWithinTransaction($dbConnection, $postgresLockId2);
@@ -386,12 +363,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId2);
     }
 
-    private function createLocker(): PostgresAdvisoryLocker
+    private function initLocker(): PostgresAdvisoryLocker
     {
         return new PostgresAdvisoryLocker();
     }
 
-    private function createPostgresLockId(
+    private function initPostgresLockId(
         string $lockKey
     ): PostgresLockId {
         return PostgresLockId::fromLockId(new LockId($lockKey));

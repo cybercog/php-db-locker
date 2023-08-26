@@ -19,24 +19,21 @@ use PHPUnit\Framework\TestCase;
 
 final class LockIdTest extends TestCase
 {
-    /** @test */
-    public function it_can_create_lock_id(): void
+    public function test_it_can_create_lock_id(): void
     {
         $lockId = new LockId('test');
 
         $this->assertSame('test', (string)$lockId);
     }
 
-    /** @test */
-    public function it_can_create_lock_id_with_value(): void
+    public function test_it_can_create_lock_id_with_value(): void
     {
         $lockId = new LockId('test', '1');
 
         $this->assertSame('test:1', (string)$lockId);
     }
 
-    /** @test */
-    public function it_cannot_create_lock_id_with_empty_key(): void
+    public function test_it_cannot_create_lock_id_with_empty_key(): void
     {
         $this->expectException(InvalidArgumentException::class);
 

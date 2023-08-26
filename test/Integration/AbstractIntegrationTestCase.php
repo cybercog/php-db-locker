@@ -31,7 +31,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         parent::tearDown();
     }
 
-    protected function createPostgresPdoConnection(): PDO
+    protected function initPostgresPdoConnection(): PDO
     {
         $dsn = implode(';', [
             'dbname=' . getenv('DB_POSTGRES_DATABASE'),
@@ -52,7 +52,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
 
-        $lockIdString = $postgresLockId->humanReadableValue();
+        $lockIdString = $postgresLockId->humanReadableValue;
 
         $this->assertTrue(
             $row !== null,
@@ -66,7 +66,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
 
-        $lockIdString = $postgresLockId->humanReadableValue();
+        $lockIdString = $postgresLockId->humanReadableValue;
 
         $this->assertTrue(
             $row === null,
@@ -91,7 +91,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         PDO $dbConnection,
         PostgresLockId $postgresLockId
     ): ?object {
-        $id = $postgresLockId->id();
+        $id = $postgresLockId->id;
 
         $lockObjectId = $id % self::POSTGRES_BLOCK_SIZE;
         $lockCatalogId = ($id - $lockObjectId) / self::POSTGRES_BLOCK_SIZE;
@@ -127,7 +127,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     private function findAllPostgresAdvisoryLocks(): array
     {
-        $dbConnection = $this->createPostgresPdoConnection();
+        $dbConnection = $this->initPostgresPdoConnection();
 
         $statement = $dbConnection->prepare(
             <<<SQL
@@ -148,7 +148,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     private function closeAllPostgresPdoConnections(): void
     {
-        $this->createPostgresPdoConnection()->query(
+        $this->initPostgresPdoConnection()->query(
             <<<SQL
             SELECT pg_terminate_backend(pid) 
             FROM pg_stat_activity

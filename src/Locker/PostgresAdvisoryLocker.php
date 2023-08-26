@@ -21,7 +21,7 @@ final class PostgresAdvisoryLocker
 {
     public function acquireLock(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId
+        PostgresLockId $postgresLockId,
     ): bool {
         $statement = $dbConnection->prepare(
             <<<SQL
@@ -30,7 +30,7 @@ final class PostgresAdvisoryLocker
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id(),
+                'lock_id' => $postgresLockId->id,
             ]
         );
 
@@ -39,10 +39,10 @@ final class PostgresAdvisoryLocker
 
     public function acquireLockWithinTransaction(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId
+        PostgresLockId $postgresLockId,
     ): bool {
         if ($dbConnection->inTransaction() === false) {
-            $lockId = $postgresLockId->humanReadableValue();
+            $lockId = $postgresLockId->humanReadableValue;
 
             throw new LogicException(
                 "Transaction-level advisory lock `$lockId` cannot be acquired outside of transaction"
@@ -56,7 +56,7 @@ final class PostgresAdvisoryLocker
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id(),
+                'lock_id' => $postgresLockId->id,
             ]
         );
 
@@ -65,7 +65,7 @@ final class PostgresAdvisoryLocker
 
     public function releaseLock(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId
+        PostgresLockId $postgresLockId,
     ): bool {
         $statement = $dbConnection->prepare(
             <<<SQL
@@ -74,7 +74,7 @@ final class PostgresAdvisoryLocker
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id(),
+                'lock_id' => $postgresLockId->id,
             ]
         );
 
@@ -82,7 +82,7 @@ final class PostgresAdvisoryLocker
     }
 
     public function releaseAllLocks(
-        PDO $dbConnection
+        PDO $dbConnection,
     ): void {
         $statement = $dbConnection->prepare(
             <<<SQL
