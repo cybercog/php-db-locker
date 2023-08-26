@@ -17,18 +17,17 @@ use InvalidArgumentException;
 
 final class PostgresLockId
 {
-    private const DB_INT_VALUE_MIN = 0;
-    private const DB_INT_VALUE_MAX = 9223372036854775807;
-    private const DB_INT32_VALUE_MAX = 2147483647;
+    private const DB_INT64_VALUE_MIN = 0;
+    private const DB_INT64_VALUE_MAX = 9223372036854775807;
 
     public function __construct(
         public readonly int $id,
         public readonly string $humanReadableValue = '',
     ) {
-        if ($id < self::DB_INT_VALUE_MIN) {
+        if ($id < self::DB_INT64_VALUE_MIN) {
             throw new InvalidArgumentException('Out of bound exception (id is too small)');
         }
-        if ($id > self::DB_INT_VALUE_MAX) {
+        if ($id > self::DB_INT64_VALUE_MAX) {
             throw new InvalidArgumentException('Out of bound exception (id is too big)');
         }
     }
