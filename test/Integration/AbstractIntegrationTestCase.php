@@ -48,7 +48,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     protected function assertPgAdvisoryLockExistsInConnection(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId
+        PostgresLockId $postgresLockId,
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
 
@@ -62,7 +62,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     protected function assertPgAdvisoryLockMissingInConnection(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId
+        PostgresLockId $postgresLockId,
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
 
@@ -75,7 +75,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     }
 
     protected function assertPgAdvisoryLocksCount(
-        int $expectedCount
+        int $expectedCount,
     ): void {
         $rows = $this->findAllPostgresAdvisoryLocks();
         $rowsCount = count($rows);
@@ -89,7 +89,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     private function findPostgresAdvisoryLockInConnection(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId
+        PostgresLockId $postgresLockId,
     ): ?object {
         $id = $postgresLockId->id;
 
