@@ -19,13 +19,14 @@ use PDO;
 
 final class PostgresAdvisoryLocker
 {
-    public function acquireLock(
+    public function tryAcquireLock(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
     ): bool {
+        // TODO: Need to cleanup humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-            SELECT pg_try_advisory_lock(:lock_id);
+            SELECT pg_try_advisory_lock(:lock_id); -- $postgresLockId->humanReadableValue
             SQL
         );
         $statement->execute(
@@ -37,7 +38,7 @@ final class PostgresAdvisoryLocker
         return $statement->fetchColumn(0);
     }
 
-    public function acquireLockWithinTransaction(
+    public function tryAcquireLockWithinTransaction(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
     ): bool {
@@ -49,9 +50,10 @@ final class PostgresAdvisoryLocker
             );
         }
 
+        // TODO: Need to cleanup humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-            SELECT pg_try_advisory_xact_lock(:lock_id);
+            SELECT pg_try_advisory_xact_lock(:lock_id); -- $postgresLockId->humanReadableValue
             SQL
         );
         $statement->execute(
@@ -68,7 +70,7 @@ final class PostgresAdvisoryLocker
         PostgresLockId $postgresLockId,
     ): bool {
         $statement = $dbConnection->prepare(
-            <<<SQL
+            <<<'SQL'
             SELECT pg_advisory_unlock(:lock_id);
             SQL
         );
@@ -85,7 +87,7 @@ final class PostgresAdvisoryLocker
         PDO $dbConnection,
     ): void {
         $statement = $dbConnection->prepare(
-            <<<SQL
+            <<<'SQL'
             SELECT pg_advisory_unlock_all();
             SQL
         );

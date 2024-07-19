@@ -33,7 +33,7 @@ final class PostgresLockId
     }
 
     public static function fromLockId(
-        LockId $lockId
+        LockId $lockId,
     ): self {
         $humanReadableValue = (string)$lockId;
 
