@@ -90,7 +90,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     private function findPostgresAdvisoryLockInConnection(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
-    ): ?object {
+    ): object | null {
         $id = $postgresLockId->id;
 
         $lockObjectId = $id % self::POSTGRES_BLOCK_SIZE;
