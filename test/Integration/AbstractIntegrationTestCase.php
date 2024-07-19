@@ -97,7 +97,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         $lockCatalogId = ($id - $lockObjectId) / self::POSTGRES_BLOCK_SIZE;
 
         $statement = $dbConnection->prepare(
-            <<<SQL
+            <<<'SQL'
             SELECT *
             FROM pg_locks
             WHERE locktype = 'advisory'
@@ -130,7 +130,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         $dbConnection = $this->initPostgresPdoConnection();
 
         $statement = $dbConnection->prepare(
-            <<<SQL
+            <<<'SQL'
             SELECT *
             FROM pg_locks
             WHERE locktype = 'advisory'
@@ -149,7 +149,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     private function closeAllPostgresPdoConnections(): void
     {
         $this->initPostgresPdoConnection()->query(
-            <<<SQL
+            <<<'SQL'
             SELECT pg_terminate_backend(pid) 
             FROM pg_stat_activity
             WHERE pid <> pg_backend_pid()

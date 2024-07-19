@@ -369,7 +369,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     }
 
     private function initPostgresLockId(
-        string $lockKey
+        string $lockKey,
     ): PostgresLockId {
         return PostgresLockId::fromLockId(new LockId($lockKey));
     }
