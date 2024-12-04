@@ -72,7 +72,7 @@ Detailed changes for each release are documented in the [CHANGELOG.md](https://g
 
 ## 🌟 Stargazers over time
 
-[![Stargazers over time](https://chart.yhype.me/github/repository-star/v1/R_kgDOHTpXAg.svg)](https://yhype.me?utm_source=github&utm_medium=cybercog-php-db-locker&utm_content=chart-repository-star-cumulative)
+[![Stargazers over time](https://chart.yhype.me/github/repository-star/v1/490362626.svg)](https://yhype.me?utm_source=github&utm_medium=cybercog-php-db-locker&utm_content=chart-repository-star-cumulative)
 
 ## About CyberCog
 
