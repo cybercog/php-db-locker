@@ -53,7 +53,7 @@ final class PostgresAdvisoryLocker
         // TODO: Need to sanitize humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT PG_ADVISORY_XACT_LOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SELECT PG_TRY_ADVISORY_XACT_LOCK(:lock_id); -- $postgresLockId->humanReadableValue
                 SQL,
         );
         $statement->execute(
