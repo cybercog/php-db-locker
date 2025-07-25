@@ -28,11 +28,6 @@ final class LockId
 
     public function __toString(): string
     {
-        return $this->compileId();
-    }
-
-    private function compileId(): string
-    {
         return $this->value !== ''
             ? $this->key . ':' . $this->value
             : $this->key;

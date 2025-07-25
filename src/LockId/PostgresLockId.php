@@ -35,11 +35,11 @@ final class PostgresLockId
     public static function fromLockId(
         LockId $lockId,
     ): self {
-        $humanReadableValue = (string)$lockId;
+        $lockStringId = (string)$lockId;
 
         return new self(
-            self::generateIdFromString($humanReadableValue),
-            $humanReadableValue
+            id: self::generateIdFromString($lockStringId),
+            humanReadableValue: $lockStringId,
         );
     }
 
