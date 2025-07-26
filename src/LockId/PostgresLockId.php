@@ -20,23 +20,35 @@ final class PostgresLockId
     private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
-    public function __construct(
+    private function __construct(
         public readonly int $classId,
         public readonly int $objectId,
         public readonly string $humanReadableValue = '',
     ) {
         if ($classId < self::DB_INT32_VALUE_MIN) {
-            throw new InvalidArgumentException('Out of bound exception (classId is too small)');
+            throw new InvalidArgumentException("Out of bound exception (classId=$classId is too small)");
         }
         if ($classId > self::DB_INT32_VALUE_MAX) {
-            throw new InvalidArgumentException('Out of bound exception (classId is too big)');
+            throw new InvalidArgumentException("Out of bound exception (classId=$classId is too big)");
         }
         if ($objectId < self::DB_INT32_VALUE_MIN) {
-            throw new InvalidArgumentException('Out of bound exception (objectId is too small)');
+            throw new InvalidArgumentException("Out of bound exception (objectId=$objectId is too small)");
         }
         if ($objectId > self::DB_INT32_VALUE_MAX) {
-            throw new InvalidArgumentException('Out of bound exception (objectId is too big)');
+            throw new InvalidArgumentException("Out of bound exception (objectId=$objectId is too big)");
         }
+    }
+
+    public static function fromKeyValue(
+        string $key,
+        string $value = '',
+    ): self {
+        return self::fromLockId(
+            new LockId(
+                $key,
+                $value,
+            ),
+        );
     }
 
     public static function fromLockId(
@@ -49,15 +61,13 @@ final class PostgresLockId
         );
     }
 
-    public static function fromKeyValue(
-        string $key,
-        string $value = '',
+    public static function fromIntKeys(
+        int $classId,
+        int $objectId,
     ): self {
-        return self::fromLockId(
-            new LockId(
-                $key,
-                $value,
-            ),
+        return new self(
+            $classId,
+            $objectId,
         );
     }
 

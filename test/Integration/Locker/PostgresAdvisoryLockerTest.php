@@ -41,7 +41,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MIN, 0);
+        $postgresLockId = PostgresLockId::fromIntKeys(self::DB_INT32_VALUE_MIN, 0);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
@@ -54,7 +54,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MAX, 0);
+        $postgresLockId = PostgresLockId::fromIntKeys(self::DB_INT32_VALUE_MAX, 0);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
@@ -67,7 +67,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(0, self::DB_INT32_VALUE_MIN);
+        $postgresLockId = PostgresLockId::fromIntKeys(0, self::DB_INT32_VALUE_MIN);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
@@ -80,7 +80,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(0, self::DB_INT32_VALUE_MAX);
+        $postgresLockId = PostgresLockId::fromIntKeys(0, self::DB_INT32_VALUE_MAX);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
