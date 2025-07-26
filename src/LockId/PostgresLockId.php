@@ -21,25 +21,31 @@ final class PostgresLockId
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
     public function __construct(
-        public readonly int $id,
+        public readonly int $classId,
+        public readonly int $objectId,
         public readonly string $humanReadableValue = '',
     ) {
-        if ($id < self::DB_INT32_VALUE_MIN) {
-            throw new InvalidArgumentException('Out of bound exception (id is too small)');
+        if ($classId < self::DB_INT32_VALUE_MIN) {
+            throw new InvalidArgumentException('Out of bound exception (classId is too small)');
         }
-        if ($id > self::DB_INT32_VALUE_MAX) {
-            throw new InvalidArgumentException('Out of bound exception (id is too big)');
+        if ($classId > self::DB_INT32_VALUE_MAX) {
+            throw new InvalidArgumentException('Out of bound exception (classId is too big)');
+        }
+        if ($objectId < self::DB_INT32_VALUE_MIN) {
+            throw new InvalidArgumentException('Out of bound exception (objectId is too small)');
+        }
+        if ($objectId > self::DB_INT32_VALUE_MAX) {
+            throw new InvalidArgumentException('Out of bound exception (objectId is too big)');
         }
     }
 
     public static function fromLockId(
         LockId $lockId,
     ): self {
-        $lockStringId = (string)$lockId;
-
         return new self(
-            id: self::convertStringToSignedInt32($lockStringId),
-            humanReadableValue: $lockStringId,
+            classId: self::convertStringToSignedInt32($lockId->key),
+            objectId: self::convertStringToSignedInt32($lockId->value),
+            humanReadableValue: (string)$lockId,
         );
     }
 

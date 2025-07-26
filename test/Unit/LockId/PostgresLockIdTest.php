@@ -22,18 +22,32 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
     private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
-    public function test_it_can_create_postgres_lock_id_with_min_id(): void
+    public function test_it_can_create_postgres_lock_id_with_min_class_id(): void
     {
-        $lockId = new PostgresLockId(self::DB_INT32_VALUE_MIN);
+        $lockId = new PostgresLockId(self::DB_INT32_VALUE_MIN, 0);
 
-        $this->assertSame(self::DB_INT32_VALUE_MIN, $lockId->id);
+        $this->assertSame(self::DB_INT32_VALUE_MIN, $lockId->classId);
     }
 
-    public function test_it_can_create_postgres_lock_id_with_max_id(): void
+    public function test_it_can_create_postgres_lock_id_with_max_class_id(): void
     {
-        $lockId = new PostgresLockId(self::DB_INT32_VALUE_MAX);
+        $lockId = new PostgresLockId(self::DB_INT32_VALUE_MAX, 0);
 
-        $this->assertSame(self::DB_INT32_VALUE_MAX, $lockId->id);
+        $this->assertSame(self::DB_INT32_VALUE_MAX, $lockId->classId);
+    }
+
+    public function test_it_can_create_postgres_lock_id_with_min_object_id(): void
+    {
+        $lockId = new PostgresLockId(0, self::DB_INT32_VALUE_MIN);
+
+        $this->assertSame(self::DB_INT32_VALUE_MIN, $lockId->objectId);
+    }
+
+    public function test_it_can_create_postgres_lock_id_with_max_object_id(): void
+    {
+        $lockId = new PostgresLockId(0, self::DB_INT32_VALUE_MAX);
+
+        $this->assertSame(self::DB_INT32_VALUE_MAX, $lockId->objectId);
     }
 
     public function test_it_can_create_postgres_lock_id_from_lock_id(): void
@@ -42,7 +56,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
 
         $postgresLockId = PostgresLockId::fromLockId($lockId);
 
-        $this->assertSame(-662733300, $postgresLockId->id);
+        $this->assertSame(-662733300, $postgresLockId->classId);
     }
 
     public function test_it_can_create_postgres_lock_id_from_lock_id_with_value(): void
@@ -51,6 +65,6 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
 
         $postgresLockId = PostgresLockId::fromLockId($lockId);
 
-        $this->assertSame(782632948, $postgresLockId->id);
+        $this->assertSame(-662733300, $postgresLockId->classId);
     }
 }

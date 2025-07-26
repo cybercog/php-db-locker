@@ -91,16 +91,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
     ): object | null {
         // For one-argument advisory locks, Postgres stores the signed 64-bit key as two 32-bit integers:
         // classid = high 32 bits, objid = low 32 bits.
-        $lockClassId = ($postgresLockId->id >> 32) & 0xFFFFFFFF;
-        $lockObjectId = $postgresLockId->id & 0xFFFFFFFF;
-
-        // Convert to signed 32-bit if necessary (Postgres stores as signed)
-        if ($lockClassId > 0x7FFFFFFF) {
-            $lockClassId -= 0x100000000;
-        }
-        if ($lockObjectId > 0x7FFFFFFF) {
-            $lockObjectId -= 0x100000000;
-        }
 
         $statement = $dbConnection->prepare(
             <<<'SQL'
@@ -116,9 +106,9 @@ abstract class AbstractIntegrationTestCase extends TestCase
         );
         $statement->execute(
             [
-                'lock_class_id' => $lockClassId,
-                'lock_object_id' => $lockObjectId,
-                'lock_object_subid' => 1, // For one keyed value
+                'lock_class_id' => $postgresLockId->classId,
+                'lock_object_id' => $postgresLockId->objectId,
+                'lock_object_subid' => 2, // Using two keyed locks
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
                 'mode' => self::MODE_EXCLUSIVE,
             ],

@@ -26,12 +26,13 @@ final class PostgresAdvisoryLocker
         // TODO: Need to sanitize humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT PG_TRY_ADVISORY_LOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
                 SQL,
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id,
+                'class_id' => $postgresLockId->classId,
+                'object_id' => $postgresLockId->objectId,
             ],
         );
 
@@ -53,12 +54,13 @@ final class PostgresAdvisoryLocker
         // TODO: Need to sanitize humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT PG_TRY_ADVISORY_XACT_LOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SELECT PG_TRY_ADVISORY_XACT_LOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
                 SQL,
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id,
+                'class_id' => $postgresLockId->classId,
+                'object_id' => $postgresLockId->objectId,
             ],
         );
 
@@ -71,12 +73,13 @@ final class PostgresAdvisoryLocker
     ): bool {
         $statement = $dbConnection->prepare(
             <<<SQL
-                SELECT PG_ADVISORY_UNLOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
                 SQL,
         );
         $statement->execute(
             [
-                'lock_id' => $postgresLockId->id,
+                'class_id' => $postgresLockId->classId,
+                'object_id' => $postgresLockId->objectId,
             ],
         );
 

@@ -37,11 +37,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    public function test_it_can_acquire_lock_with_smallest_lock_id(): void
+    public function test_it_can_acquire_lock_with_min_class_id(): void
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MIN);
+        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MIN, 0);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
@@ -50,11 +50,37 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
     }
 
-    public function test_it_can_acquire_lock_with_biggest_lock_id(): void
+    public function test_it_can_acquire_lock_with_max_class_id(): void
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MAX);
+        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MAX, 0);
+
+        $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
+
+        $this->assertTrue($isLockAcquired);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
+        $this->assertPgAdvisoryLocksCount(1);
+    }
+
+    public function test_it_can_acquire_lock_with_min_object_id(): void
+    {
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = new PostgresLockId(0, self::DB_INT32_VALUE_MIN);
+
+        $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
+
+        $this->assertTrue($isLockAcquired);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId);
+        $this->assertPgAdvisoryLocksCount(1);
+    }
+
+    public function test_it_can_acquire_lock_with_max_object_id(): void
+    {
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId = new PostgresLockId(0, self::DB_INT32_VALUE_MAX);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
