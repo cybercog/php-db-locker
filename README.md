@@ -32,8 +32,10 @@ composer require cybercog/php-db-locker
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
-$postgresLocker = new PostgresAdvisoryLocker();
-$postgresLockId = PostgresLockId::fromLockId(new LockId('user', '4'));
+$postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
+$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromLockId(
+    new LockId('user', '4'),
+);
 
 $dbConnection->beginTransaction();
 $isLockAcquired = $postgresLocker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
@@ -50,8 +52,10 @@ $dbConnection->commit();
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
-$postgresLocker = new PostgresAdvisoryLocker();
-$postgresLockId = PostgresLockId::fromLockId(new LockId('user', '4'));
+$postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
+$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromLockId(
+    new LockId('user', '4'),
+);
 
 $isLockAcquired = $postgresLocker->acquireLock($dbConnection, $postgresLockId);
 if ($isLockAcquired) {
