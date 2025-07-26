@@ -39,7 +39,7 @@ final class PostgresLockId
         $lockStringId = (string)$lockId;
 
         return new self(
-            id: self::generateIdFromString($lockStringId),
+            id: self::convertStringToSignedInt32($lockStringId),
             humanReadableValue: $lockStringId,
         );
     }
@@ -51,15 +51,19 @@ final class PostgresLockId
      * The crc32 function returns an unsigned 32-bit integer (0 to 4_294_967_295).
      * Postgres advisory locks require a signed 32-bit integer (-2_147_483_648 to 2_147_483_647).
      *
-     * This method shifts the crc32 output into the signed int32 range by subtracting (2^31) + 1,
-     * ensuring the result fits within Postgres's required range and preserves uniqueness.
+     * This method converts the unsigned crc32 result to a signed 32-bit integer,
+     * matching the way PostgreSQL interprets int4 values internally.
      *
-     * @param string $string The input string to hash into an int32 lock ID.
+     * @param string $string The input string to hash into a signed int32 lock ID.
      * @return int The signed 32-bit integer suitable for Postgres advisory locks.
      */
-    private static function generateIdFromString(
+    private static function convertStringToSignedInt32(
         string $string,
     ): int {
-        return crc32($string) - self::DB_INT32_VALUE_MAX - 1;
+        $unsignedInt = crc32($string);
+
+        return $unsignedInt > 0x7FFFFFFF
+            ? $unsignedInt - 0x100000000
+            : $unsignedInt;
     }
 }
