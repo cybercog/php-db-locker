@@ -91,26 +91,36 @@ abstract class AbstractIntegrationTestCase extends TestCase
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
     ): object | null {
-        $id = $postgresLockId->id;
+        // For one-argument advisory locks, Postgres stores the signed 64-bit key as two 32-bit integers:
+        // classid = high 32 bits, objid = low 32 bits.
+        $lockClassId = ($postgresLockId->id >> 32) & 0xFFFFFFFF;
+        $lockObjectId = $postgresLockId->id & 0xFFFFFFFF;
 
-        $lockObjectId = $id % self::POSTGRES_BLOCK_SIZE;
-        $lockCatalogId = ($id - $lockObjectId) / self::POSTGRES_BLOCK_SIZE;
+        // Convert to signed 32-bit if necessary (Postgres stores as signed)
+        if ($lockClassId > 0x7FFFFFFF) {
+            $lockClassId -= 0x100000000;
+        }
+        if ($lockObjectId > 0x7FFFFFFF) {
+            $lockObjectId -= 0x100000000;
+        }
 
         $statement = $dbConnection->prepare(
             <<<'SQL'
                 SELECT *
                 FROM pg_locks
                 WHERE locktype = 'advisory'
-                AND classid = :lock_catalog_id
+                AND classid = :lock_class_id
                 AND objid = :lock_object_id
+                AND objsubid = :lock_object_subid
                 AND pid = :connection_pid
                 AND mode = :mode
                 SQL,
         );
         $statement->execute(
             [
-                'lock_catalog_id' => $lockCatalogId,
+                'lock_class_id' => $lockClassId,
                 'lock_object_id' => $lockObjectId,
+                'lock_object_subid' => 1, // For one keyed value
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
                 'mode' => self::MODE_EXCLUSIVE,
             ],
@@ -150,7 +160,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     {
         $this->initPostgresPdoConnection()->query(
             <<<'SQL'
-            SELECT PG_TERMINATE_BACKEND(pid) 
+            SELECT PG_TERMINATE_BACKEND(pid)
             FROM pg_stat_activity
             WHERE pid <> PG_BACKEND_PID()
             SQL,

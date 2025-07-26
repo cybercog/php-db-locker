@@ -42,7 +42,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
 
         $postgresLockId = PostgresLockId::fromLockId($lockId);
 
-        $this->assertSame(3632233996, $postgresLockId->id);
+        $this->assertSame(1484750348, $postgresLockId->id);
     }
 
     public function test_it_can_create_postgres_lock_id_from_lock_id_with_value(): void
@@ -51,6 +51,6 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
 
         $postgresLockId = PostgresLockId::fromLockId($lockId);
 
-        $this->assertSame(782632948, $postgresLockId->id);
+        $this->assertSame(-1364850700, $postgresLockId->id);
     }
 }
