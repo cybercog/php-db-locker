@@ -56,7 +56,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
         $this->assertTrue(
             $row !== null,
-            "Lock id `$lockIdString` does not exists"
+            "Lock id `$lockIdString` does not exists",
         );
     }
 
@@ -70,7 +70,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
         $this->assertTrue(
             $row === null,
-            "Lock id `$lockIdString` is present"
+            "Lock id `$lockIdString` is present",
         );
     }
 
@@ -83,7 +83,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         $this->assertSame(
             $expectedCount,
             $rowsCount,
-            "Failed asserting that advisory locks actual count $rowsCount matches expected count $expectedCount."
+            "Failed asserting that advisory locks actual count $rowsCount matches expected count $expectedCount.",
         );
     }
 
@@ -98,14 +98,14 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
         $statement = $dbConnection->prepare(
             <<<'SQL'
-            SELECT *
-            FROM pg_locks
-            WHERE locktype = 'advisory'
-            AND classid = :lock_catalog_id
-            AND objid = :lock_object_id
-            AND pid = :connection_pid
-            AND mode = :mode
-            SQL
+                SELECT *
+                FROM pg_locks
+                WHERE locktype = 'advisory'
+                AND classid = :lock_catalog_id
+                AND objid = :lock_object_id
+                AND pid = :connection_pid
+                AND mode = :mode
+                SQL,
         );
         $statement->execute(
             [
@@ -113,7 +113,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 'lock_object_id' => $lockObjectId,
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
                 'mode' => self::MODE_EXCLUSIVE,
-            ]
+            ],
         );
 
         $result = $statement->fetchObject();
@@ -131,16 +131,16 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
         $statement = $dbConnection->prepare(
             <<<'SQL'
-            SELECT *
-            FROM pg_locks
-            WHERE locktype = 'advisory'
-            AND mode = :mode
-            SQL
+                SELECT *
+                FROM pg_locks
+                WHERE locktype = 'advisory'
+                AND mode = :mode
+                SQL,
         );
         $statement->execute(
             [
                 'mode' => self::MODE_EXCLUSIVE,
-            ]
+            ],
         );
 
         return $statement->fetchAll(PDO::FETCH_OBJ);
@@ -150,10 +150,10 @@ abstract class AbstractIntegrationTestCase extends TestCase
     {
         $this->initPostgresPdoConnection()->query(
             <<<'SQL'
-            SELECT pg_terminate_backend(pid) 
+            SELECT PG_TERMINATE_BACKEND(pid) 
             FROM pg_stat_activity
-            WHERE pid <> pg_backend_pid()
-            SQL
+            WHERE pid <> PG_BACKEND_PID()
+            SQL,
         );
     }
 }

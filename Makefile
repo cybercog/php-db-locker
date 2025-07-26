@@ -8,10 +8,10 @@ setup-dev: ## Setup project for development
 	make composer-install
 
 start: ## Start application silently
-	docker-compose up -d
+	docker compose up -d
 
 stop: ## Stop application
-	docker-compose down
+	docker compose down
 
 restart: ## Restart the application
 	make stop

@@ -23,16 +23,16 @@ final class PostgresAdvisoryLocker
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
     ): bool {
-        // TODO: Need to cleanup humanReadableValue?
+        // TODO: Need to sanitize humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-            SELECT pg_try_advisory_lock(:lock_id); -- $postgresLockId->humanReadableValue
-            SQL
+                SELECT PG_TRY_ADVISORY_LOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SQL,
         );
         $statement->execute(
             [
                 'lock_id' => $postgresLockId->id,
-            ]
+            ],
         );
 
         return $statement->fetchColumn(0);
@@ -46,20 +46,20 @@ final class PostgresAdvisoryLocker
             $lockId = $postgresLockId->humanReadableValue;
 
             throw new LogicException(
-                "Transaction-level advisory lock `$lockId` cannot be acquired outside of transaction"
+                "Transaction-level advisory lock `$lockId` cannot be acquired outside of transaction",
             );
         }
 
-        // TODO: Need to cleanup humanReadableValue?
+        // TODO: Need to sanitize humanReadableValue?
         $statement = $dbConnection->prepare(
             <<<SQL
-            SELECT pg_try_advisory_xact_lock(:lock_id); -- $postgresLockId->humanReadableValue
-            SQL
+                SELECT PG_TRY_ADVISORY_XACT_LOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SQL,
         );
         $statement->execute(
             [
                 'lock_id' => $postgresLockId->id,
-            ]
+            ],
         );
 
         return $statement->fetchColumn(0);
@@ -70,14 +70,14 @@ final class PostgresAdvisoryLocker
         PostgresLockId $postgresLockId,
     ): bool {
         $statement = $dbConnection->prepare(
-            <<<'SQL'
-            SELECT pg_advisory_unlock(:lock_id);
-            SQL
+            <<<SQL
+                SELECT PG_ADVISORY_UNLOCK(:lock_id); -- $postgresLockId->humanReadableValue
+                SQL,
         );
         $statement->execute(
             [
                 'lock_id' => $postgresLockId->id,
-            ]
+            ],
         );
 
         return $statement->fetchColumn(0);
@@ -88,8 +88,8 @@ final class PostgresAdvisoryLocker
     ): void {
         $statement = $dbConnection->prepare(
             <<<'SQL'
-            SELECT pg_advisory_unlock_all();
-            SQL
+                SELECT PG_ADVISORY_UNLOCK_ALL();
+                SQL,
         );
         $statement->execute();
     }
