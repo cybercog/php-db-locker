@@ -20,11 +20,12 @@ use PDO;
 final class PostgresAdvisoryLocker
 {
     /**
-     * Try to acquire transaction-level lock (recommended).
+     * Acquire transaction-level lock (recommended).
      */
-    public function tryAcquireLockWithinTransaction(
+    public function acquireLockWithinTransaction(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
+        PostgresLockModeEnum $lockMode = PostgresLockModeEnum::Try,
     ): bool {
         if ($dbConnection->inTransaction() === false) {
             $lockId = $postgresLockId->humanReadableValue;
@@ -34,12 +35,12 @@ final class PostgresAdvisoryLocker
             );
         }
 
-        // TODO: Need to sanitize humanReadableValue?
-        $statement = $dbConnection->prepare(
-            <<<SQL
-                SELECT PG_TRY_ADVISORY_XACT_LOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
-                SQL,
-        );
+        $sql = match ($lockMode) {
+            PostgresLockModeEnum::Try => 'SELECT PG_TRY_ADVISORY_XACT_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
+            PostgresLockModeEnum::Block => 'SELECT PG_ADVISORY_XACT_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
+        };
+
+        $statement = $dbConnection->prepare($sql);
         $statement->execute(
             [
                 'class_id' => $postgresLockId->classId,
@@ -51,18 +52,19 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Try to acquire session-level lock (use only if transaction-level lock not applicable).
+     * Acquire session-level lock (use only if transaction-level lock not applicable).
      */
-    public function tryAcquireLockWithinSession(
+    public function acquireLockWithinSession(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
+        PostgresLockModeEnum $lockMode = PostgresLockModeEnum::Try,
     ): bool {
-        // TODO: Need to sanitize humanReadableValue?
-        $statement = $dbConnection->prepare(
-            <<<SQL
-                SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
-                SQL,
-        );
+        $sql = match ($lockMode) {
+            PostgresLockModeEnum::Try => 'SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
+            PostgresLockModeEnum::Block => 'SELECT PG_ADVISORY_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
+        };
+
+        $statement = $dbConnection->prepare($sql);
         $statement->execute(
             [
                 'class_id' => $postgresLockId->classId,
