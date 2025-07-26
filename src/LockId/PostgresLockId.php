@@ -49,6 +49,18 @@ final class PostgresLockId
         );
     }
 
+    public static function fromKeyValue(
+        string $key,
+        string $value = '',
+    ): self {
+        return self::fromLockId(
+            new LockId(
+                $key,
+                $value,
+            ),
+        );
+    }
+
     /**
      * Generates a deterministic signed 32-bit integer ID
      * from a string for use as a Postgres advisory lock key.

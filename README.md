@@ -13,7 +13,7 @@ PHP application-level database locking mechanisms to implement concurrency contr
 
 Supported drivers:
 
-- Postgres
+- Postgres — [PostgreSQL Advisory Locks Documentation](https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS)
 
 ## Installation
 
@@ -33,12 +33,13 @@ composer require cybercog/php-db-locker
 $dbConnection = new PDO($dsn, $username, $password);
 
 $postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromLockId(
-    new LockId('user', '4'),
-);
+$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
 $dbConnection->beginTransaction();
-$isLockAcquired = $postgresLocker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
+$isLockAcquired = $postgresLocker->acquireLockWithinTransaction(
+    $dbConnection,
+    $postgresLockId,
+);
 if ($isLockAcquired) {
     // Execute logic if lock was successful
 } else {
@@ -53,11 +54,12 @@ $dbConnection->commit();
 $dbConnection = new PDO($dsn, $username, $password);
 
 $postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromLockId(
-    new LockId('user', '4'),
-);
+$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
-$isLockAcquired = $postgresLocker->acquireLock($dbConnection, $postgresLockId);
+$isLockAcquired = $postgresLocker->acquireLock(
+    $dbConnection,
+    $postgresLockId,
+);
 if ($isLockAcquired) {
     // Execute logic if lock was successful
 } else {
