@@ -65,7 +65,7 @@ if ($isLockAcquired) {
 } else {
     // Execute logic if lock acquisition has been failed
 }
-$postgresLocker->releaseLock($dbConnection, $postgresLockId);
+$postgresLocker->releaseLockWithinSession($dbConnection, $postgresLockId);
 ```
 
 ## Changelog

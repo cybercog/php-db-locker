@@ -19,26 +19,9 @@ use PDO;
 
 final class PostgresAdvisoryLocker
 {
-    public function tryAcquireLock(
-        PDO $dbConnection,
-        PostgresLockId $postgresLockId,
-    ): bool {
-        // TODO: Need to sanitize humanReadableValue?
-        $statement = $dbConnection->prepare(
-            <<<SQL
-                SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
-                SQL,
-        );
-        $statement->execute(
-            [
-                'class_id' => $postgresLockId->classId,
-                'object_id' => $postgresLockId->objectId,
-            ],
-        );
-
-        return $statement->fetchColumn(0);
-    }
-
+    /**
+     * Try to acquire transaction-level lock (recommended).
+     */
     public function tryAcquireLockWithinTransaction(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
@@ -67,7 +50,33 @@ final class PostgresAdvisoryLocker
         return $statement->fetchColumn(0);
     }
 
-    public function releaseLock(
+    /**
+     * Try to acquire session-level lock (use only if transaction-level lock not applicable).
+     */
+    public function tryAcquireLockWithinSession(
+        PDO $dbConnection,
+        PostgresLockId $postgresLockId,
+    ): bool {
+        // TODO: Need to sanitize humanReadableValue?
+        $statement = $dbConnection->prepare(
+            <<<SQL
+                SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
+                SQL,
+        );
+        $statement->execute(
+            [
+                'class_id' => $postgresLockId->classId,
+                'object_id' => $postgresLockId->objectId,
+            ],
+        );
+
+        return $statement->fetchColumn(0);
+    }
+
+    /**
+     * Release session-level lock.
+     */
+    public function releaseLockWithinSession(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
     ): bool {
@@ -86,7 +95,10 @@ final class PostgresAdvisoryLocker
         return $statement->fetchColumn(0);
     }
 
-    public function releaseAllLocks(
+    /**
+     * Release all session-level locks.
+     */
+    public function releaseAllLocksWithinSession(
         PDO $dbConnection,
     ): void {
         $statement = $dbConnection->prepare(
