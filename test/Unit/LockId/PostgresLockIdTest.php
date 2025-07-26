@@ -19,21 +19,21 @@ use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 
 final class PostgresLockIdTest extends AbstractUnitTestCase
 {
-    private const DB_INT64_VALUE_MIN = 0;
-    private const DB_INT64_VALUE_MAX = 9223372036854775807;
+    private const DB_INT32_VALUE_MIN = -2_147_483_648;
+    private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
     public function test_it_can_create_postgres_lock_id_with_min_id(): void
     {
-        $lockId = new PostgresLockId(self::DB_INT64_VALUE_MIN);
+        $lockId = new PostgresLockId(self::DB_INT32_VALUE_MIN);
 
-        $this->assertSame(self::DB_INT64_VALUE_MIN, $lockId->id);
+        $this->assertSame(self::DB_INT32_VALUE_MIN, $lockId->id);
     }
 
     public function test_it_can_create_postgres_lock_id_with_max_id(): void
     {
-        $lockId = new PostgresLockId(self::DB_INT64_VALUE_MAX);
+        $lockId = new PostgresLockId(self::DB_INT32_VALUE_MAX);
 
-        $this->assertSame(self::DB_INT64_VALUE_MAX, $lockId->id);
+        $this->assertSame(self::DB_INT32_VALUE_MAX, $lockId->id);
     }
 
     public function test_it_can_create_postgres_lock_id_from_lock_id(): void

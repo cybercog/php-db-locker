@@ -21,8 +21,8 @@ use LogicException;
 
 final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 {
-    private const DB_INT64_VALUE_MIN = 0;
-    private const DB_INT64_VALUE_MAX = 9223372036854775807;
+    private const DB_INT32_VALUE_MIN = -2_147_483_648;
+    private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
     public function test_it_can_acquire_lock(): void
     {
@@ -41,7 +41,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(self::DB_INT64_VALUE_MIN);
+        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MIN);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
@@ -54,7 +54,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = new PostgresLockId(self::DB_INT64_VALUE_MAX);
+        $postgresLockId = new PostgresLockId(self::DB_INT32_VALUE_MAX);
 
         $isLockAcquired = $locker->tryAcquireLock($dbConnection, $postgresLockId);
 
