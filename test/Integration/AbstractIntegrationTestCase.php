@@ -19,8 +19,6 @@ use PHPUnit\Framework\TestCase;
 
 abstract class AbstractIntegrationTestCase extends TestCase
 {
-    private const POSTGRES_BLOCK_SIZE = 4294967296;
-
     private const MODE_EXCLUSIVE = 'ExclusiveLock';
     private const MODE_SHARE = 'ShareLock';
 
