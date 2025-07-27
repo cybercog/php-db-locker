@@ -16,45 +16,50 @@ namespace Cog\Test\DbLocker\Unit\LockId;
 use Cog\DbLocker\LockId\LockId;
 use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 use InvalidArgumentException;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class LockIdTest extends AbstractUnitTestCase
 {
-    public function test_it_can_create_lock_id(): void
-    {
-        $lockId = new LockId('test');
+    #[DataProvider('provideItCanCreateLockIdData')]
+    public function testItCanCreateLockId(
+        string $key,
+        string $value,
+        string $expectedCompiledId,
+    ): void {
+        $lockId = new LockId($key, $value);
 
-        $this->assertSame('test', (string)$lockId);
+        $this->assertSame($key, $lockId->key);
+        $this->assertSame($value, $lockId->value);
+        $this->assertSame($expectedCompiledId, (string)$lockId);
     }
 
-    public function test_it_can_create_lock_id_with_space_key(): void
+    public static function provideItCanCreateLockIdData(): array
     {
-        $lockId = new LockId(' ');
-
-        $this->assertSame(' ', (string)$lockId);
+        return [
+            'key only' => [
+                'test',
+                '',
+                'test',
+            ],
+            'key space' => [
+                ' ',
+                '',
+                ' ',
+            ],
+            'key space + value space' => [
+                ' ',
+                ' ',
+                ' : ',
+            ],
+            'key + value' => [
+                ' test ',
+                ' 12 ',
+                ' test : 12 ',
+            ],
+        ];
     }
 
-    public function test_it_can_create_lock_id_with_spaced_key(): void
-    {
-        $lockId = new LockId('  test  ');
-
-        $this->assertSame('  test  ', (string)$lockId);
-    }
-
-    public function test_it_can_create_lock_id_with_value(): void
-    {
-        $lockId = new LockId('test', '1');
-
-        $this->assertSame('test:1', (string)$lockId);
-    }
-
-    public function test_it_can_create_lock_id_with_value_and_spaced_key(): void
-    {
-        $lockId = new LockId('  test  ', '1');
-
-        $this->assertSame('  test  :1', (string)$lockId);
-    }
-
-    public function test_it_cannot_create_lock_id_with_empty_key(): void
+    public function testItCannotCreateLockIdWithEmptyKey(): void
     {
         $this->expectException(InvalidArgumentException::class);
 

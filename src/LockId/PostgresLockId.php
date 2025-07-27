@@ -17,30 +17,57 @@ use InvalidArgumentException;
 
 final class PostgresLockId
 {
-    private const DB_INT64_VALUE_MIN = -9_223_372_036_854_775_808;
-    private const DB_INT64_VALUE_MAX = 9_223_372_036_854_775_807;
+    private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
-    public function __construct(
-        public readonly int $id,
+    private function __construct(
+        public readonly int $classId,
+        public readonly int $objectId,
         public readonly string $humanReadableValue = '',
     ) {
-        if ($id < self::DB_INT64_VALUE_MIN) {
-            throw new InvalidArgumentException('Out of bound exception (id is too small)');
+        if ($classId < self::DB_INT32_VALUE_MIN) {
+            throw new InvalidArgumentException("Out of bound exception (classId=$classId is too small)");
         }
-        if ($id > self::DB_INT64_VALUE_MAX) {
-            throw new InvalidArgumentException('Out of bound exception (id is too big)');
+        if ($classId > self::DB_INT32_VALUE_MAX) {
+            throw new InvalidArgumentException("Out of bound exception (classId=$classId is too big)");
         }
+        if ($objectId < self::DB_INT32_VALUE_MIN) {
+            throw new InvalidArgumentException("Out of bound exception (objectId=$objectId is too small)");
+        }
+        if ($objectId > self::DB_INT32_VALUE_MAX) {
+            throw new InvalidArgumentException("Out of bound exception (objectId=$objectId is too big)");
+        }
+    }
+
+    public static function fromKeyValue(
+        string $key,
+        string $value = '',
+    ): self {
+        return self::fromLockId(
+            new LockId(
+                $key,
+                $value,
+            ),
+        );
     }
 
     public static function fromLockId(
         LockId $lockId,
     ): self {
-        $lockStringId = (string)$lockId;
-
         return new self(
-            id: self::convertStringToSignedInt32($lockStringId),
-            humanReadableValue: $lockStringId,
+            classId: self::convertStringToSignedInt32($lockId->key),
+            objectId: self::convertStringToSignedInt32($lockId->value),
+            humanReadableValue: (string)$lockId,
+        );
+    }
+
+    public static function fromIntKeys(
+        int $classId,
+        int $objectId,
+    ): self {
+        return new self(
+            $classId,
+            $objectId,
         );
     }
 

@@ -16,41 +16,143 @@ namespace Cog\Test\DbLocker\Unit\LockId;
 use Cog\DbLocker\LockId\LockId;
 use Cog\DbLocker\LockId\PostgresLockId;
 use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
+use PHPUnit\Framework\Attributes\DataProvider;
 
 final class PostgresLockIdTest extends AbstractUnitTestCase
 {
-    private const DB_INT64_VALUE_MIN = 0;
-    private const DB_INT64_VALUE_MAX = 9223372036854775807;
+    private const DB_INT32_VALUE_MIN = -2_147_483_648;
+    private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
-    public function test_it_can_create_postgres_lock_id_with_min_id(): void
-    {
-        $lockId = new PostgresLockId(self::DB_INT64_VALUE_MIN);
+    #[DataProvider('provideItCanCreatePostgresLockIdFromKeyValueData')]
+    public function testItCanCreatePostgresLockIdFromKeyValue(
+        string $key,
+        string $value,
+        int $expectedClassId,
+        int $expectedObjectId,
+    ): void {
+        $postgresLockId = PostgresLockId::fromKeyValue($key, $value);
 
-        $this->assertSame(self::DB_INT64_VALUE_MIN, $lockId->id);
+        $this->assertSame($expectedClassId, $postgresLockId->classId);
+        $this->assertSame($expectedObjectId, $postgresLockId->objectId);
     }
 
-    public function test_it_can_create_postgres_lock_id_with_max_id(): void
+    public static function provideItCanCreatePostgresLockIdFromKeyValueData(): array
     {
-        $lockId = new PostgresLockId(self::DB_INT64_VALUE_MAX);
-
-        $this->assertSame(self::DB_INT64_VALUE_MAX, $lockId->id);
+        return [
+            'key + empty value' => [
+                'test',
+                '',
+                -662733300,
+                0,
+            ],
+            'key + value' => [
+                'test',
+                '1',
+                -662733300,
+                -2082672713,
+            ],
+        ];
     }
 
-    public function test_it_can_create_postgres_lock_id_from_lock_id(): void
-    {
-        $lockId = new LockId('test');
-
+    #[DataProvider('provideItCanCreatePostgresLockIdFromLockIdData')]
+    public function testItCanCreatePostgresLockIdFromLockId(
+        LockId $lockId,
+        int $expectedClassId,
+        int $expectedObjectId,
+    ): void {
         $postgresLockId = PostgresLockId::fromLockId($lockId);
 
-        $this->assertSame(-662733300, $postgresLockId->id);
+        $this->assertSame($expectedClassId, $postgresLockId->classId);
+        $this->assertSame($expectedObjectId, $postgresLockId->objectId);
     }
 
-    public function test_it_can_create_postgres_lock_id_from_lock_id_with_value(): void
+    public static function provideItCanCreatePostgresLockIdFromLockIdData(): array
     {
-        $lockId = new LockId('test', '1');
+        return [
+            'key only' => [
+                new LockId('test'),
+                -662733300,
+                0,
+            ],
+            'key + value' => [
+                new LockId('test', '1'),
+                -662733300,
+                -2082672713,
+            ],
+        ];
+    }
 
-        $postgresLockId = PostgresLockId::fromLockId($lockId);
+    #[DataProvider('provideItCanCreatePostgresLockIdFromIntKeysData')]
+    public function testItCanCreatePostgresLockIdFromIntKeys(
+        int $classId,
+        int $objectId,
+    ): void {
+        $lockId = PostgresLockId::fromIntKeys($classId, $objectId);
 
-        $this->assertSame(782632948, $postgresLockId->id);
+        $this->assertSame($classId, $lockId->classId);
+        $this->assertSame($objectId, $lockId->objectId);
+    }
+
+    public static function provideItCanCreatePostgresLockIdFromIntKeysData(): array
+    {
+        return [
+            'min class_id' => [
+                self::DB_INT32_VALUE_MIN,
+                0,
+            ],
+            'max class_id' => [
+                self::DB_INT32_VALUE_MAX,
+                0,
+            ],
+            'min object_id' => [
+                0,
+                self::DB_INT32_VALUE_MIN,
+            ],
+            'max object_id' => [
+                0,
+                self::DB_INT32_VALUE_MAX,
+            ],
+        ];
+    }
+
+    #[DataProvider('provideItCanCreatePostgresLockIdFromOutOfRangeIntKeysData')]
+    public function testItCanNotCreatePostgresLockIdFromOutOfRangeIntKeys(
+        int $classId,
+        int $objectId,
+        string $expectedExceptionMessage,
+    ): void {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage($expectedExceptionMessage);
+
+        $lockId = PostgresLockId::fromIntKeys($classId, $objectId);
+
+        $this->assertSame($classId, $lockId->classId);
+        $this->assertSame($objectId, $lockId->objectId);
+    }
+
+    public static function provideItCanCreatePostgresLockIdFromOutOfRangeIntKeysData(): array
+    {
+        return [
+            'min class_id' => [
+                self::DB_INT32_VALUE_MIN - 1,
+                0,
+                "Out of bound exception (classId=-2147483649 is too small)"
+            ],
+            'max class_id' => [
+                self::DB_INT32_VALUE_MAX + 1,
+                0,
+                "Out of bound exception (classId=2147483648 is too big)"
+            ],
+            'min object_id' => [
+                0,
+                self::DB_INT32_VALUE_MIN - 1,
+                "Out of bound exception (objectId=-2147483649 is too small)"
+            ],
+            'max object_id' => [
+                0,
+                self::DB_INT32_VALUE_MAX + 1,
+                "Out of bound exception (objectId=2147483648 is too big)"
+            ],
+        ];
     }
 }

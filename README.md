@@ -9,11 +9,13 @@
 
 ## Introduction
 
+> WARNING! This library is currently under development and may not be stable. Use in your services at your own risk.
+
 PHP application-level database locking mechanisms to implement concurrency control patterns.
 
 Supported drivers:
 
-- Postgres
+- Postgres — [PostgreSQL Advisory Locks Documentation](https://www.postgresql.org/docs/current/explicit-locking.html#ADVISORY-LOCKS)
 
 ## Installation
 
@@ -33,12 +35,16 @@ composer require cybercog/php-db-locker
 $dbConnection = new PDO($dsn, $username, $password);
 
 $postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromLockId(
-    new LockId('user', '4'),
-);
+$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
 $dbConnection->beginTransaction();
-$isLockAcquired = $postgresLocker->acquireLockWithinTransaction($dbConnection, $postgresLockId);
+$isLockAcquired = $postgresLocker->acquireLock(
+    $dbConnection,
+    $postgresLockId,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Transaction,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
+    \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
+);
 if ($isLockAcquired) {
     // Execute logic if lock was successful
 } else {
@@ -53,11 +59,15 @@ $dbConnection->commit();
 $dbConnection = new PDO($dsn, $username, $password);
 
 $postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromLockId(
-    new LockId('user', '4'),
-);
+$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
-$isLockAcquired = $postgresLocker->acquireLock($dbConnection, $postgresLockId);
+$isLockAcquired = $postgresLocker->acquireLock(
+    $dbConnection,
+    $postgresLockId,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Session,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
+    \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
+);
 if ($isLockAcquired) {
     // Execute logic if lock was successful
 } else {
