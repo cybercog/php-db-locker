@@ -98,9 +98,6 @@ abstract class AbstractIntegrationTestCase extends TestCase
         PostgresLockId $postgresLockId,
         PostgresLockModeEnum $mode,
     ): object | null {
-        // For one-argument advisory locks, Postgres stores the signed 64-bit key as two 32-bit integers:
-        // classid = high 32 bits, objid = low 32 bits.
-
         $statement = $dbConnection->prepare(
             <<<'SQL'
                 SELECT *
