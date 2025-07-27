@@ -7,12 +7,12 @@ namespace Cog\DbLocker\Locker;
 /**
  * PostgresAdvisoryLockTypeEnum defines the type of advisory lock acquisition.
  *
- * - NonBlocking. Attempt to acquire the lock without blocking:
+ * - NonBlocking. Attempt to acquire the lock without blocking (with _TRY_):
  *      - PG_TRY_ADVISORY_LOCK
  *      - PG_TRY_ADVISORY_LOCK_SHARED
  *      - PG_TRY_ADVISORY_XACT_LOCK
  *      - PG_TRY_ADVISORY_XACT_LOCK_SHARED
- * - Blocking. Acquire the lock, blocking until it becomes available:
+ * - Blocking. Acquire the lock, blocking until it becomes available (without _TRY_):
  *      - PG_ADVISORY_LOCK
  *      - PG_ADVISORY_LOCK_SHARED
  *      - PG_ADVISORY_XACT_LOCK
