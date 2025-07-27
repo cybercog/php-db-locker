@@ -36,9 +36,10 @@ $postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
 $postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
 $dbConnection->beginTransaction();
-$isLockAcquired = $postgresLocker->acquireLockWithinTransaction(
+$isLockAcquired = $postgresLocker->acquireLock(
     $dbConnection,
     $postgresLockId,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Transaction,
 );
 if ($isLockAcquired) {
     // Execute logic if lock was successful
@@ -59,13 +60,14 @@ $postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4')
 $isLockAcquired = $postgresLocker->acquireLock(
     $dbConnection,
     $postgresLockId,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Session,
 );
 if ($isLockAcquired) {
     // Execute logic if lock was successful
 } else {
     // Execute logic if lock acquisition has been failed
 }
-$postgresLocker->releaseLockWithinSession($dbConnection, $postgresLockId);
+$postgresLocker->releaseLock($dbConnection, $postgresLockId);
 ```
 
 ## Changelog

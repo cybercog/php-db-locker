@@ -164,7 +164,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Session,
         );
 
-        $isLockReleased = $locker->releaseLockWithinSession($dbConnection, $postgresLockId);
+        $isLockReleased = $locker->releaseLock($dbConnection, $postgresLockId);
 
         $this->assertTrue($isLockReleased);
         $this->assertPgAdvisoryLocksCount(0);
@@ -186,8 +186,8 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Session,
         );
 
-        $isLockReleased1 = $locker->releaseLockWithinSession($dbConnection, $postgresLockId);
-        $isLockReleased2 = $locker->releaseLockWithinSession($dbConnection, $postgresLockId);
+        $isLockReleased1 = $locker->releaseLock($dbConnection, $postgresLockId);
+        $isLockReleased2 = $locker->releaseLock($dbConnection, $postgresLockId);
 
         $this->assertTrue($isLockReleased1);
         $this->assertTrue($isLockReleased2);
@@ -205,7 +205,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $postgresLockId,
             PostgresAdvisoryLockScopeEnum::Session,
         );
-        $locker->releaseLockWithinSession(
+        $locker->releaseLock(
             $dbConnection1,
             $postgresLockId,
         );
@@ -238,7 +238,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Session,
         );
 
-        $isLockReleased = $locker->releaseLockWithinSession($dbConnection1, $postgresLockId);
+        $isLockReleased = $locker->releaseLock($dbConnection1, $postgresLockId);
         $isLockAcquired = $locker->acquireLock(
             $dbConnection2,
             $postgresLockId,
@@ -258,7 +258,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $dbConnection = $this->initPostgresPdoConnection();
         $postgresLockId = PostgresLockId::fromKeyValue('test');
 
-        $isLockReleased = $locker->releaseLockWithinSession($dbConnection, $postgresLockId);
+        $isLockReleased = $locker->releaseLock($dbConnection, $postgresLockId);
 
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(0);
@@ -276,7 +276,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Session,
         );
 
-        $isLockReleased = $locker->releaseLockWithinSession($dbConnection2, $postgresLockId);
+        $isLockReleased = $locker->releaseLock($dbConnection2, $postgresLockId);
 
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(1);
@@ -298,7 +298,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Session,
         );
 
-        $locker->releaseAllLocksWithinSession($dbConnection);
+        $locker->releaseAllLocks($dbConnection);
 
         $this->assertPgAdvisoryLocksCount(0);
     }
@@ -308,7 +308,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
 
-        $locker->releaseAllLocksWithinSession($dbConnection);
+        $locker->releaseAllLocks($dbConnection);
 
         $this->assertPgAdvisoryLocksCount(0);
     }
@@ -343,7 +343,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Session,
         );
 
-        $locker->releaseAllLocksWithinSession($dbConnection1);
+        $locker->releaseAllLocks($dbConnection1);
 
         $this->assertPgAdvisoryLocksCount(2);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $postgresLockId3);
@@ -475,7 +475,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Transaction,
         );
 
-        $isLockReleased = $locker->releaseLockWithinSession($dbConnection, $postgresLockId);
+        $isLockReleased = $locker->releaseLock($dbConnection, $postgresLockId);
 
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(1);
@@ -500,11 +500,74 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresAdvisoryLockScopeEnum::Transaction,
         );
 
-        $locker->releaseAllLocksWithinSession($dbConnection);
+        $locker->releaseAllLocks($dbConnection);
 
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $postgresLockId1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId2);
+    }
+
+    public function testItCannotReleaseAllLocksWithTransactionScope(): void
+    {
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId1 = PostgresLockId::fromKeyValue('test');
+        $postgresLockId2 = PostgresLockId::fromKeyValue('test2');
+        $locker->acquireLock(
+            $dbConnection,
+            $postgresLockId1,
+            PostgresAdvisoryLockScopeEnum::Session,
+        );
+        $dbConnection->beginTransaction();
+        $locker->acquireLock(
+            $dbConnection,
+            $postgresLockId2,
+            PostgresAdvisoryLockScopeEnum::Transaction,
+        );
+
+        try {
+            $locker->releaseAllLocks(
+                $dbConnection,
+                PostgresAdvisoryLockScopeEnum::Transaction,
+            );
+        } catch (\InvalidArgumentException $exception) {
+            $this->assertSame(
+                'Transaction-level advisory lock cannot be released',
+                $exception->getMessage(),
+            );
+        }
+    }
+
+    public function testItCannotReleaseLocksWithTransactionScope(): void
+    {
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $postgresLockId1 = PostgresLockId::fromKeyValue('test');
+        $postgresLockId2 = PostgresLockId::fromKeyValue('test2');
+        $locker->acquireLock(
+            $dbConnection,
+            $postgresLockId1,
+            PostgresAdvisoryLockScopeEnum::Session,
+        );
+        $dbConnection->beginTransaction();
+        $locker->acquireLock(
+            $dbConnection,
+            $postgresLockId2,
+            PostgresAdvisoryLockScopeEnum::Transaction,
+        );
+
+        try {
+            $locker->releaseLock(
+                $dbConnection,
+                $postgresLockId2,
+                PostgresAdvisoryLockScopeEnum::Transaction,
+            );
+        } catch (\InvalidArgumentException $exception) {
+            $this->assertSame(
+                'Transaction-level advisory lock cannot be released',
+                $exception->getMessage(),
+            );
+        }
     }
 
     private function initLocker(): PostgresAdvisoryLocker

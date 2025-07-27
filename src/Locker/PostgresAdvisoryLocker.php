@@ -59,10 +59,15 @@ final class PostgresAdvisoryLocker
     /**
      * Release session-level lock.
      */
-    public function releaseLockWithinSession(
+    public function releaseLock(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
+        PostgresAdvisoryLockScopeEnum $scope = PostgresAdvisoryLockScopeEnum::Session,
     ): bool {
+        if ($scope === PostgresAdvisoryLockScopeEnum::Transaction) {
+            throw new \InvalidArgumentException('Transaction-level advisory lock cannot be released');
+        }
+
         $statement = $dbConnection->prepare(
             <<<SQL
                 SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
@@ -81,9 +86,14 @@ final class PostgresAdvisoryLocker
     /**
      * Release all session-level locks.
      */
-    public function releaseAllLocksWithinSession(
+    public function releaseAllLocks(
         PDO $dbConnection,
+        PostgresAdvisoryLockScopeEnum $scope = PostgresAdvisoryLockScopeEnum::Session,
     ): void {
+        if ($scope === PostgresAdvisoryLockScopeEnum::Transaction) {
+            throw new \InvalidArgumentException('Transaction-level advisory lock cannot be released');
+        }
+
         $statement = $dbConnection->prepare(
             <<<'SQL'
                 SELECT PG_ADVISORY_UNLOCK_ALL();
