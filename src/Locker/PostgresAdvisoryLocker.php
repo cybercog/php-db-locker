@@ -20,13 +20,14 @@ use PDO;
 final class PostgresAdvisoryLocker
 {
     /**
-     * Acquire an advisory lock with configurable scope and mode.
+     * Acquire an advisory lock with configurable scope, mode and behavior.
      */
     public function acquireLock(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
         PostgresAdvisoryLockScopeEnum $scope = PostgresAdvisoryLockScopeEnum::Transaction,
-        PostgresAdvisoryLockModeEnum $mode = PostgresAdvisoryLockModeEnum::Try,
+        PostgresAdvisoryLockTypeEnum $type = PostgresAdvisoryLockTypeEnum::NonBlocking,
+        PostgresLockModeEnum $mode = PostgresLockModeEnum::Exclusive,
     ): bool {
         if ($scope === PostgresAdvisoryLockScopeEnum::Transaction && $dbConnection->inTransaction() === false) {
             throw new LogicException(
@@ -34,16 +35,49 @@ final class PostgresAdvisoryLocker
             );
         }
 
-        $sql = match ([$scope, $mode]) {
-            [PostgresAdvisoryLockScopeEnum::Transaction, PostgresAdvisoryLockModeEnum::Try] =>
-                'SELECT PG_TRY_ADVISORY_XACT_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
-            [PostgresAdvisoryLockScopeEnum::Transaction, PostgresAdvisoryLockModeEnum::Block] =>
-                'SELECT PG_ADVISORY_XACT_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
-            [PostgresAdvisoryLockScopeEnum::Session, PostgresAdvisoryLockModeEnum::Try] =>
-                'SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
-            [PostgresAdvisoryLockScopeEnum::Session, PostgresAdvisoryLockModeEnum::Block] =>
-                'SELECT PG_ADVISORY_LOCK(:class_id, :object_id); -- ' . $postgresLockId->humanReadableValue,
+        $sql = match ([$scope, $type, $mode]) {
+            [
+                PostgresAdvisoryLockScopeEnum::Transaction,
+                PostgresAdvisoryLockTypeEnum::NonBlocking,
+                PostgresLockModeEnum::Exclusive,
+            ] => 'SELECT PG_TRY_ADVISORY_XACT_LOCK(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Transaction,
+                PostgresAdvisoryLockTypeEnum::Blocking,
+                PostgresLockModeEnum::Exclusive,
+            ] => 'SELECT PG_ADVISORY_XACT_LOCK(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Transaction,
+                PostgresAdvisoryLockTypeEnum::NonBlocking,
+                PostgresLockModeEnum::Share,
+            ] => 'SELECT PG_TRY_ADVISORY_XACT_LOCK_SHARE(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Transaction,
+                PostgresAdvisoryLockTypeEnum::Blocking,
+                PostgresLockModeEnum::Share,
+            ] => 'SELECT PG_ADVISORY_XACT_LOCK_SHARE(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Session,
+                PostgresAdvisoryLockTypeEnum::NonBlocking,
+                PostgresLockModeEnum::Exclusive,
+            ] => 'SELECT PG_TRY_ADVISORY_LOCK(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Session,
+                PostgresAdvisoryLockTypeEnum::Blocking,
+                PostgresLockModeEnum::Exclusive,
+            ] => 'SELECT PG_ADVISORY_LOCK(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Session,
+                PostgresAdvisoryLockTypeEnum::NonBlocking,
+                PostgresLockModeEnum::Share,
+            ] => 'SELECT PG_TRY_ADVISORY_LOCK_SHARE(:class_id, :object_id);',
+            [
+                PostgresAdvisoryLockScopeEnum::Session,
+                PostgresAdvisoryLockTypeEnum::Blocking,
+                PostgresLockModeEnum::Share,
+            ] => 'SELECT PG_ADVISORY_LOCK_SHARE(:class_id, :object_id);',
         };
+        $sql .= " -- $postgresLockId->humanReadableValue";
 
         $statement = $dbConnection->prepare($sql);
         $statement->execute(
@@ -57,7 +91,7 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Release session-level lock.
+     * Release session level advisory lock.
      */
     public function releaseLock(
         PDO $dbConnection,
@@ -84,7 +118,7 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Release all session-level locks.
+     * Release all session level advisory locks held by the current session.
      */
     public function releaseAllLocks(
         PDO $dbConnection,

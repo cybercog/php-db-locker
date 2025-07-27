@@ -13,15 +13,13 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Integration;
 
+use Cog\DbLocker\Locker\PostgresLockModeEnum;
 use Cog\DbLocker\LockId\PostgresLockId;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
 abstract class AbstractIntegrationTestCase extends TestCase
 {
-    private const MODE_EXCLUSIVE = 'ExclusiveLock';
-    private const MODE_SHARE = 'ShareLock';
-
     protected function tearDown(): void
     {
         $this->closeAllPostgresPdoConnections();
@@ -110,7 +108,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 'lock_object_id' => $postgresLockId->objectId,
                 'lock_object_subid' => 2, // Using two keyed locks
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
-                'mode' => self::MODE_EXCLUSIVE,
+                'mode' => PostgresLockModeEnum::Exclusive->value,
             ],
         );
 
@@ -137,7 +135,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
         );
         $statement->execute(
             [
-                'mode' => self::MODE_EXCLUSIVE,
+                'mode' => PostgresLockModeEnum::Exclusive->value,
             ],
         );
 
