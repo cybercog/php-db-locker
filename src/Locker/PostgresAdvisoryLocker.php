@@ -50,12 +50,12 @@ final class PostgresAdvisoryLocker
                 PostgresAdvisoryLockScopeEnum::Transaction,
                 PostgresAdvisoryLockTypeEnum::NonBlocking,
                 PostgresLockModeEnum::Share,
-            ] => 'SELECT PG_TRY_ADVISORY_XACT_LOCK_SHARE(:class_id, :object_id);',
+            ] => 'SELECT PG_TRY_ADVISORY_XACT_LOCK_SHARED(:class_id, :object_id);',
             [
                 PostgresAdvisoryLockScopeEnum::Transaction,
                 PostgresAdvisoryLockTypeEnum::Blocking,
                 PostgresLockModeEnum::Share,
-            ] => 'SELECT PG_ADVISORY_XACT_LOCK_SHARE(:class_id, :object_id);',
+            ] => 'SELECT PG_ADVISORY_XACT_LOCK_SHARED(:class_id, :object_id);',
             [
                 PostgresAdvisoryLockScopeEnum::Session,
                 PostgresAdvisoryLockTypeEnum::NonBlocking,
@@ -70,12 +70,12 @@ final class PostgresAdvisoryLocker
                 PostgresAdvisoryLockScopeEnum::Session,
                 PostgresAdvisoryLockTypeEnum::NonBlocking,
                 PostgresLockModeEnum::Share,
-            ] => 'SELECT PG_TRY_ADVISORY_LOCK_SHARE(:class_id, :object_id);',
+            ] => 'SELECT PG_TRY_ADVISORY_LOCK_SHARED(:class_id, :object_id);',
             [
                 PostgresAdvisoryLockScopeEnum::Session,
                 PostgresAdvisoryLockTypeEnum::Blocking,
                 PostgresLockModeEnum::Share,
-            ] => 'SELECT PG_ADVISORY_LOCK_SHARE(:class_id, :object_id);',
+            ] => 'SELECT PG_ADVISORY_LOCK_SHARED(:class_id, :object_id);',
         };
         $sql .= " -- $postgresLockId->humanReadableValue";
 
@@ -97,16 +97,19 @@ final class PostgresAdvisoryLocker
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
         PostgresAdvisoryLockScopeEnum $scope = PostgresAdvisoryLockScopeEnum::Session,
+        PostgresLockModeEnum $mode = PostgresLockModeEnum::Exclusive,
     ): bool {
         if ($scope === PostgresAdvisoryLockScopeEnum::Transaction) {
             throw new \InvalidArgumentException('Transaction-level advisory lock cannot be released');
         }
 
-        $statement = $dbConnection->prepare(
-            <<<SQL
-                SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id); -- $postgresLockId->humanReadableValue
-                SQL,
-        );
+        $sql = match ($mode) {
+            PostgresLockModeEnum::Exclusive => 'SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id);',
+            PostgresLockModeEnum::Share => 'SELECT PG_ADVISORY_UNLOCK_SHARED(:class_id, :object_id);',
+        };
+        $sql .= " -- $postgresLockId->humanReadableValue";
+
+        $statement = $dbConnection->prepare($sql);
         $statement->execute(
             [
                 'class_id' => $postgresLockId->classId,
