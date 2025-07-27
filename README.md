@@ -40,6 +40,8 @@ $isLockAcquired = $postgresLocker->acquireLock(
     $dbConnection,
     $postgresLockId,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Transaction,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
+    \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
 );
 if ($isLockAcquired) {
     // Execute logic if lock was successful
@@ -61,6 +63,8 @@ $isLockAcquired = $postgresLocker->acquireLock(
     $dbConnection,
     $postgresLockId,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Session,
+    \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
+    \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
 );
 if ($isLockAcquired) {
     // Execute logic if lock was successful
