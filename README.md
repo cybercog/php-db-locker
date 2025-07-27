@@ -9,6 +9,8 @@
 
 ## Introduction
 
+> WARNING! This library is currently under development and may not be stable. Use in your services at your own risk.
+
 PHP application-level database locking mechanisms to implement concurrency control patterns.
 
 Supported drivers:
