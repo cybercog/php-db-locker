@@ -45,8 +45,13 @@ abstract class AbstractIntegrationTestCase extends TestCase
     protected function assertPgAdvisoryLockExistsInConnection(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
+        PostgresLockModeEnum $mode = PostgresLockModeEnum::Exclusive,
     ): void {
-        $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
+        $row = $this->findPostgresAdvisoryLockInConnection(
+            $dbConnection,
+            $postgresLockId,
+            $mode,
+        );
 
         $lockIdString = $postgresLockId->humanReadableValue;
 
@@ -59,8 +64,13 @@ abstract class AbstractIntegrationTestCase extends TestCase
     protected function assertPgAdvisoryLockMissingInConnection(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
+        PostgresLockModeEnum $mode = PostgresLockModeEnum::Exclusive,
     ): void {
-        $row = $this->findPostgresAdvisoryLockInConnection($dbConnection, $postgresLockId);
+        $row = $this->findPostgresAdvisoryLockInConnection(
+            $dbConnection,
+            $postgresLockId,
+            $mode,
+        );
 
         $lockIdString = $postgresLockId->humanReadableValue;
 
@@ -86,6 +96,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
     private function findPostgresAdvisoryLockInConnection(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
+        PostgresLockModeEnum $mode,
     ): object | null {
         // For one-argument advisory locks, Postgres stores the signed 64-bit key as two 32-bit integers:
         // classid = high 32 bits, objid = low 32 bits.
@@ -108,7 +119,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 'lock_object_id' => $postgresLockId->objectId,
                 'lock_object_subid' => 2, // Using two keyed locks
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
-                'mode' => PostgresLockModeEnum::Exclusive->value,
+                'mode' => $mode->value,
             ],
         );
 
@@ -130,14 +141,9 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 SELECT *
                 FROM pg_locks
                 WHERE locktype = 'advisory'
-                AND mode = :mode
                 SQL,
         );
-        $statement->execute(
-            [
-                'mode' => PostgresLockModeEnum::Exclusive->value,
-            ],
-        );
+        $statement->execute();
 
         return $statement->fetchAll(PDO::FETCH_OBJ);
     }
@@ -146,10 +152,10 @@ abstract class AbstractIntegrationTestCase extends TestCase
     {
         $this->initPostgresPdoConnection()->query(
             <<<'SQL'
-            SELECT PG_TERMINATE_BACKEND(pid)
-            FROM pg_stat_activity
-            WHERE pid <> PG_BACKEND_PID()
-            SQL,
+                SELECT PG_TERMINATE_BACKEND(pid)
+                FROM pg_stat_activity
+                WHERE pid <> PG_BACKEND_PID()
+                SQL,
         );
     }
 }
