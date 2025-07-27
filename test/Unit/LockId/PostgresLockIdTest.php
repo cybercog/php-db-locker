@@ -13,7 +13,6 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Unit\LockId;
 
-use Cog\DbLocker\LockId\LockId;
 use Cog\DbLocker\LockId\PostgresLockId;
 use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -48,34 +47,6 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
             'key + value' => [
                 'test',
                 '1',
-                -662733300,
-                -2082672713,
-            ],
-        ];
-    }
-
-    #[DataProvider('provideItCanCreatePostgresLockIdFromLockIdData')]
-    public function testItCanCreatePostgresLockIdFromLockId(
-        LockId $lockId,
-        int $expectedClassId,
-        int $expectedObjectId,
-    ): void {
-        $postgresLockId = PostgresLockId::fromLockId($lockId);
-
-        $this->assertSame($expectedClassId, $postgresLockId->classId);
-        $this->assertSame($expectedObjectId, $postgresLockId->objectId);
-    }
-
-    public static function provideItCanCreatePostgresLockIdFromLockIdData(): array
-    {
-        return [
-            'key only' => [
-                new LockId('test'),
-                -662733300,
-                0,
-            ],
-            'key + value' => [
-                new LockId('test', '1'),
                 -662733300,
                 -2082672713,
             ],

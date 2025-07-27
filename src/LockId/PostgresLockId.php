@@ -43,21 +43,10 @@ final class PostgresLockId
         string $key,
         string $value = '',
     ): self {
-        return self::fromLockId(
-            new LockId(
-                $key,
-                $value,
-            ),
-        );
-    }
-
-    public static function fromLockId(
-        LockId $lockId,
-    ): self {
         return new self(
-            classId: self::convertStringToSignedInt32($lockId->key),
-            objectId: self::convertStringToSignedInt32($lockId->value),
-            humanReadableValue: (string)$lockId,
+            classId: self::convertStringToSignedInt32($key),
+            objectId: self::convertStringToSignedInt32($value),
+            humanReadableValue: "$key:$value",
         );
     }
 
