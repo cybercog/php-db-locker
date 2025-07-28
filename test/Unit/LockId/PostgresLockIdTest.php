@@ -107,22 +107,22 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
             'min class_id' => [
                 self::DB_INT32_VALUE_MIN - 1,
                 0,
-                "Out of bound exception (classId=-2147483649 is too small)"
+                "Out of bound exception (classId=-2147483649 is too small)",
             ],
             'max class_id' => [
                 self::DB_INT32_VALUE_MAX + 1,
                 0,
-                "Out of bound exception (classId=2147483648 is too big)"
+                "Out of bound exception (classId=2147483648 is too big)",
             ],
             'min object_id' => [
                 0,
                 self::DB_INT32_VALUE_MIN - 1,
-                "Out of bound exception (objectId=-2147483649 is too small)"
+                "Out of bound exception (objectId=-2147483649 is too small)",
             ],
             'max object_id' => [
                 0,
                 self::DB_INT32_VALUE_MAX + 1,
-                "Out of bound exception (objectId=2147483648 is too big)"
+                "Out of bound exception (objectId=2147483648 is too big)",
             ],
         ];
     }
