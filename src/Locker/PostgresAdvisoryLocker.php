@@ -38,7 +38,34 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Acquire a session-level advisory lock with a configurable acquisition type and mode.
+     * Acquire a session-level advisory lock with a configurable wait & access modes.
+     *
+     * TODO: Write that transaction-level is recommended.
+     * TODO: Cover with tests
+     */
+    public function acquireSessionLevelLockHandler(
+        PDO $dbConnection,
+        PostgresLockId $postgresLockId,
+        PostgresAdvisoryLockWaitModeEnum $waitMode = PostgresAdvisoryLockWaitModeEnum::NonBlocking,
+        PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
+    ): AdvisoryLockSessionLevel {
+        return new AdvisoryLockSessionLevel(
+            $dbConnection,
+            $this,
+            $postgresLockId,
+            $accessMode,
+            wasAcquired: $this->acquireLock(
+                $dbConnection,
+                $postgresLockId,
+                PostgresAdvisoryLockLevelEnum::Session,
+                $waitMode,
+                $accessMode,
+            ),
+        );
+    }
+
+    /**
+     * Acquire a session-level advisory lock with a configurable wait & access modes.
      *
      * TODO: Write that transaction-level is recommended.
      */
