@@ -92,12 +92,7 @@ final class PostgresAdvisoryLocker
      */
     public function releaseAllSessionLevelLocks(
         PDO $dbConnection,
-        PostgresAdvisoryLockLevelEnum $level = PostgresAdvisoryLockLevelEnum::Session,
     ): void {
-        if ($level === PostgresAdvisoryLockLevelEnum::Transaction) {
-            throw new \InvalidArgumentException('Transaction-level advisory lock cannot be released');
-        }
-
         $statement = $dbConnection->prepare(
             <<<'SQL'
                 SELECT PG_ADVISORY_UNLOCK_ALL();

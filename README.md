@@ -34,13 +34,13 @@ composer require cybercog/php-db-locker
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
-$postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
+$locker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
+$lockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
 $dbConnection->beginTransaction();
-$isLockAcquired = $postgresLocker->acquireTransactionLevelLock(
+$isLockAcquired = $locker->acquireTransactionLevelLock(
     $dbConnection,
-    $postgresLockId,
+    $lockId,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockLevelEnum::Transaction,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
     \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
@@ -58,12 +58,12 @@ $dbConnection->commit();
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
-$postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
+$locker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
+$lockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 
-$isLockAcquired = $postgresLocker->acquireSessionLevelLock(
+$isLockAcquired = $locker->acquireSessionLevelLock(
     $dbConnection,
-    $postgresLockId,
+    $lockId,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockLevelEnum::Session,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
     \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
@@ -73,7 +73,7 @@ if ($isLockAcquired) {
 } else {
     // Execute logic if lock acquisition has been failed
 }
-$postgresLocker->releaseSessionLevelLock($dbConnection, $postgresLockId);
+$locker->releaseSessionLevelLock($dbConnection, $lockId);
 ```
 
 ## Changelog
