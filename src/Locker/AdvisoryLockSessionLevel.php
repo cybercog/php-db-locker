@@ -16,6 +16,9 @@ namespace Cog\DbLocker\Locker;
 use Cog\DbLocker\LockId\PostgresLockId;
 use PDO;
 
+/**
+ * @internal
+ */
 final class AdvisoryLockSessionLevel
 {
     private bool $isReleased = false;

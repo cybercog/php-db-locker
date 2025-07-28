@@ -20,7 +20,29 @@ use PDO;
 final class PostgresAdvisoryLocker
 {
     /**
-     * Acquire a transaction-level advisory lock with a configurable acquisition type and mode.
+     * Acquire a transaction-level advisory lock with configurable wait and access modes.
+     *
+     * TODO: Cover with tests
+     */
+    public function acquireTransactionLevelLockHandler(
+        PDO $dbConnection,
+        PostgresLockId $postgresLockId,
+        PostgresAdvisoryLockWaitModeEnum $waitMode = PostgresAdvisoryLockWaitModeEnum::NonBlocking,
+        PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
+    ): AdvisoryLockTransactionLevel {
+        return new AdvisoryLockTransactionLevel(
+            wasAcquired: $this->acquireLock(
+                $dbConnection,
+                $postgresLockId,
+                PostgresAdvisoryLockLevelEnum::Transaction,
+                $waitMode,
+                $accessMode,
+            ),
+        );
+    }
+
+    /**
+     * Acquire a transaction-level advisory lock with configurable wait and access modes.
      */
     public function acquireTransactionLevelLock(
         PDO $dbConnection,
@@ -38,7 +60,7 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Acquire a session-level advisory lock with a configurable wait & access modes.
+     * Acquire a session-level advisory lock with configurable wait and access modes.
      *
      * TODO: Write that transaction-level is recommended.
      * TODO: Cover with tests
@@ -65,7 +87,7 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Acquire a session-level advisory lock with a configurable wait & access modes.
+     * Acquire a session-level advisory lock with configurable wait and access modes.
      *
      * TODO: Write that transaction-level is recommended.
      */
