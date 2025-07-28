@@ -11,7 +11,7 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\LockId;
+namespace Cog\DbLocker\Postgres;
 
 use InvalidArgumentException;
 

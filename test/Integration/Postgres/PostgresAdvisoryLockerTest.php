@@ -11,11 +11,11 @@
 
 declare(strict_types=1);
 
-namespace Cog\Test\DbLocker\Integration\Locker;
+namespace Cog\Test\DbLocker\Integration\Postgres;
 
-use Cog\DbLocker\Locker\PostgresAdvisoryLocker;
-use Cog\DbLocker\Locker\PostgresLockAccessModeEnum;
-use Cog\DbLocker\LockId\PostgresLockId;
+use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
+use Cog\DbLocker\Postgres\PostgresAdvisoryLocker;
+use Cog\DbLocker\Postgres\PostgresLockId;
 use Cog\Test\DbLocker\Integration\AbstractIntegrationTestCase;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;

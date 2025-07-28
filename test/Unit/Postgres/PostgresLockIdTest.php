@@ -11,9 +11,9 @@
 
 declare(strict_types=1);
 
-namespace Cog\Test\DbLocker\Unit\LockId;
+namespace Cog\Test\DbLocker\Unit\Postgres;
 
-use Cog\DbLocker\LockId\PostgresLockId;
+use Cog\DbLocker\Postgres\PostgresLockId;
 use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 

@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Integration;
 
-use Cog\DbLocker\Locker\PostgresLockAccessModeEnum;
-use Cog\DbLocker\LockId\PostgresLockId;
+use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
+use Cog\DbLocker\Postgres\PostgresLockId;
 use PDO;
 use PHPUnit\Framework\TestCase;
 

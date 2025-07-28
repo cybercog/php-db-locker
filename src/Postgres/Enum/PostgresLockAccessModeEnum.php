@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\Locker;
+namespace Cog\DbLocker\Postgres\Enum;
 
 /**
  * PostgresLockAccessModeEnum defines the access mode of advisory lock acquisition.

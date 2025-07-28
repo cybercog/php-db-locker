@@ -11,12 +11,12 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\Locker;
+namespace Cog\DbLocker\Postgres\LockHandle;
 
 /**
  * @internal
  */
-final class AdvisoryLockTransactionLevel
+final class PostgresTransactionLevelLockHandle
 {
     public function __construct(
         public readonly bool $wasAcquired,
