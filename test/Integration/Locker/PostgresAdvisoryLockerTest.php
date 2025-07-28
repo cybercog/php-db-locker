@@ -27,7 +27,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     #[DataProvider('provideItCanTryAcquireLockWithinSessionData')]
     public function testItCanTryAcquireLockWithinSession(
-        PostgresLockAccessModeEnum $mode,
+        PostgresLockAccessModeEnum $accessMode,
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
@@ -36,12 +36,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $postgresLockId,
-            accessMode: $mode,
+            accessMode: $accessMode,
         );
 
         $this->assertTrue($isLockAcquired);
         $this->assertPgAdvisoryLocksCount(1);
-        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId, $mode);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId, $accessMode);
     }
 
     public static function provideItCanTryAcquireLockWithinSessionData(): array
@@ -58,7 +58,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     #[DataProvider('provideItCanTryAcquireLockWithinTransactionData')]
     public function testItCanTryAcquireLockWithinTransaction(
-        PostgresLockAccessModeEnum $mode,
+        PostgresLockAccessModeEnum $accessMode,
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
@@ -68,12 +68,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLockAcquired = $locker->acquireTransactionLevelLock(
             $dbConnection,
             $postgresLockId,
-            accessMode: $mode,
+            accessMode: $accessMode,
         );
 
         $this->assertTrue($isLockAcquired);
         $this->assertPgAdvisoryLocksCount(1);
-        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId, $mode);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId, $accessMode);
     }
 
     public static function provideItCanTryAcquireLockWithinTransactionData(): array
@@ -194,7 +194,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     #[DataProvider('provideItCanReleaseLockData')]
     public function testItCanReleaseLock(
-        PostgresLockAccessModeEnum $mode,
+        PostgresLockAccessModeEnum $accessMode,
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
@@ -202,13 +202,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $postgresLockId,
-            accessMode: $mode,
+            accessMode: $accessMode,
         );
 
         $isLockReleased = $locker->releaseSessionLevelLock(
             $dbConnection,
             $postgresLockId,
-            accessMode: $mode,
+            accessMode: $accessMode,
         );
 
         $this->assertTrue($isLockReleased);
@@ -256,12 +256,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         return [
             'release exclusive lock as share' => [
-                'acquireMode' => PostgresLockAccessModeEnum::Exclusive,
-                'releaseMode' => PostgresLockAccessModeEnum::Share,
+                'acquireAccessMode' => PostgresLockAccessModeEnum::Exclusive,
+                'releaseAccessMode' => PostgresLockAccessModeEnum::Share,
             ],
             'release share lock as exclusive' => [
-                'acquireMode' => PostgresLockAccessModeEnum::Share,
-                'releaseMode' => PostgresLockAccessModeEnum::Exclusive,
+                'acquireAccessMode' => PostgresLockAccessModeEnum::Share,
+                'releaseAccessMode' => PostgresLockAccessModeEnum::Exclusive,
             ],
         ];
     }
