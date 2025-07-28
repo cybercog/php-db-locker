@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\Locker;
+namespace Cog\DbLocker\Postgres\Enum;
 
 /**
- * PostgresAdvisoryLockTypeEnum defines the type of advisory lock acquisition.
+ * PostgresLockWaitModeEnum defines the type of advisory lock acquisition.
  *
  * - NonBlocking. Attempt to acquire the lock without blocking (with _TRY_):
  *      - PG_TRY_ADVISORY_LOCK
@@ -18,8 +18,8 @@ namespace Cog\DbLocker\Locker;
  *      - PG_ADVISORY_XACT_LOCK
  *      - PG_ADVISORY_XACT_LOCK_SHARED
  */
-enum PostgresAdvisoryLockTypeEnum
+enum PostgresLockWaitModeEnum
 {
-    case NonBlocking;
     case Blocking;
+    case NonBlocking;
 }

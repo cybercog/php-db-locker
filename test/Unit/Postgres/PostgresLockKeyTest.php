@@ -11,13 +11,13 @@
 
 declare(strict_types=1);
 
-namespace Cog\Test\DbLocker\Unit\LockId;
+namespace Cog\Test\DbLocker\Unit\Postgres;
 
-use Cog\DbLocker\LockId\PostgresLockId;
+use Cog\DbLocker\Postgres\PostgresLockKey;
 use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-final class PostgresLockIdTest extends AbstractUnitTestCase
+final class PostgresLockKeyTest extends AbstractUnitTestCase
 {
     private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
@@ -29,7 +29,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
         int $expectedClassId,
         int $expectedObjectId,
     ): void {
-        $postgresLockId = PostgresLockId::fromKeyValue($key, $value);
+        $postgresLockId = PostgresLockKey::create($key, $value);
 
         $this->assertSame($expectedClassId, $postgresLockId->classId);
         $this->assertSame($expectedObjectId, $postgresLockId->objectId);
@@ -58,7 +58,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
         int $classId,
         int $objectId,
     ): void {
-        $lockId = PostgresLockId::fromIntKeys($classId, $objectId);
+        $lockId = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
         $this->assertSame($classId, $lockId->classId);
         $this->assertSame($objectId, $lockId->objectId);
@@ -95,7 +95,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
-        $lockId = PostgresLockId::fromIntKeys($classId, $objectId);
+        $lockId = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
         $this->assertSame($classId, $lockId->classId);
         $this->assertSame($objectId, $lockId->objectId);
@@ -107,22 +107,22 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
             'min class_id' => [
                 self::DB_INT32_VALUE_MIN - 1,
                 0,
-                "Out of bound exception (classId=-2147483649 is too small)"
+                "Out of bound exception (classId=-2147483649 is too small)",
             ],
             'max class_id' => [
                 self::DB_INT32_VALUE_MAX + 1,
                 0,
-                "Out of bound exception (classId=2147483648 is too big)"
+                "Out of bound exception (classId=2147483648 is too big)",
             ],
             'min object_id' => [
                 0,
                 self::DB_INT32_VALUE_MIN - 1,
-                "Out of bound exception (objectId=-2147483649 is too small)"
+                "Out of bound exception (objectId=-2147483649 is too small)",
             ],
             'max object_id' => [
                 0,
                 self::DB_INT32_VALUE_MAX + 1,
-                "Out of bound exception (objectId=2147483648 is too big)"
+                "Out of bound exception (objectId=2147483648 is too big)",
             ],
         ];
     }

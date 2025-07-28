@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\Locker;
+namespace Cog\DbLocker\Postgres\Enum;
 
 /**
- * PostgresAdvisoryLockScopeEnum defines the scope of advisory lock acquisition.
+ * PostgresLockLevelEnum defines the level of advisory lock acquisition.
  *
  * - Session. Session-level advisory lock (without _XACT_):
  *      - PG_ADVISORY_LOCK
@@ -18,7 +18,7 @@ namespace Cog\DbLocker\Locker;
  *      - PG_TRY_ADVISORY_XACT_LOCK
  *      - PG_TRY_ADVISORY_XACT_LOCK_SHARED
  */
-enum PostgresAdvisoryLockScopeEnum
+enum PostgresLockLevelEnum
 {
     case Session;
     case Transaction;

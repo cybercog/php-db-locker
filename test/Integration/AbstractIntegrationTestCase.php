@@ -13,8 +13,8 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Integration;
 
-use Cog\DbLocker\Locker\PostgresLockModeEnum;
-use Cog\DbLocker\LockId\PostgresLockId;
+use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
+use Cog\DbLocker\Postgres\PostgresLockKey;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
@@ -44,8 +44,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     protected function assertPgAdvisoryLockExistsInConnection(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
-        PostgresLockModeEnum $mode = PostgresLockModeEnum::Exclusive,
+        PostgresLockKey $postgresLockId,
+        PostgresLockAccessModeEnum $mode = PostgresLockAccessModeEnum::Exclusive,
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection(
             $dbConnection,
@@ -63,8 +63,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     protected function assertPgAdvisoryLockMissingInConnection(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
-        PostgresLockModeEnum $mode = PostgresLockModeEnum::Exclusive,
+        PostgresLockKey $postgresLockId,
+        PostgresLockAccessModeEnum $mode = PostgresLockAccessModeEnum::Exclusive,
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection(
             $dbConnection,
@@ -95,8 +95,8 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     private function findPostgresAdvisoryLockInConnection(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
-        PostgresLockModeEnum $mode,
+        PostgresLockKey $postgresLockId,
+        PostgresLockAccessModeEnum $mode,
     ): object | null {
         $statement = $dbConnection->prepare(
             <<<'SQL'

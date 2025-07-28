@@ -34,18 +34,17 @@ composer require cybercog/php-db-locker
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
-$postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
+$locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
+$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 $dbConnection->beginTransaction();
-$isLockAcquired = $postgresLocker->acquireLock(
+$lock = $locker->acquireSessionLevelLockHandler(
     $dbConnection,
-    $postgresLockId,
-    \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Transaction,
-    \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
-    \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
+    $lockId,
+    \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+    \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
 );
-if ($isLockAcquired) {
+if ($lock->wasAcquired) {
     // Execute logic if lock was successful
 } else {
     // Execute logic if lock acquisition has been failed
@@ -58,22 +57,24 @@ $dbConnection->commit();
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
-$postgresLocker = new \Cog\DbLocker\Locker\PostgresAdvisoryLocker();
-$postgresLockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
+$locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
+$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
-$isLockAcquired = $postgresLocker->acquireLock(
-    $dbConnection,
-    $postgresLockId,
-    \Cog\DbLocker\Locker\PostgresAdvisoryLockScopeEnum::Session,
-    \Cog\DbLocker\Locker\PostgresAdvisoryLockTypeEnum::NonBlocking,
-    \Cog\DbLocker\Locker\PostgresLockModeEnum::Exclusive,
-);
-if ($isLockAcquired) {
-    // Execute logic if lock was successful
-} else {
-    // Execute logic if lock acquisition has been failed
+try {
+    $lock = $locker->acquireSessionLevelLockHandler(
+        $dbConnection,
+        $lockId,
+        \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+        \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+    );
+    if ($lock->wasAcquired) {
+        // Execute logic if lock was successful
+    } else {
+        // Execute logic if lock acquisition has been failed
+    }
+} finally {
+    $lock->release();
 }
-$postgresLocker->releaseLock($dbConnection, $postgresLockId);
 ```
 
 ## Changelog
