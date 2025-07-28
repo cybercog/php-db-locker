@@ -14,7 +14,6 @@ declare(strict_types=1);
 namespace Cog\Test\DbLocker\Integration\Locker;
 
 use Cog\DbLocker\Locker\PostgresAdvisoryLocker;
-use Cog\DbLocker\Locker\PostgresAdvisoryLockLevelEnum;
 use Cog\DbLocker\Locker\PostgresLockAccessModeEnum;
 use Cog\DbLocker\LockId\PostgresLockId;
 use Cog\Test\DbLocker\Integration\AbstractIntegrationTestCase;
@@ -565,36 +564,6 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $postgresLockId1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $postgresLockId2);
-    }
-
-    public function testItCannotReleaseLockWithTransactionScope(): void
-    {
-        $locker = $this->initLocker();
-        $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId1 = PostgresLockId::fromKeyValue('test');
-        $postgresLockId2 = PostgresLockId::fromKeyValue('test2');
-        $locker->acquireSessionLevelLock(
-            $dbConnection,
-            $postgresLockId1,
-        );
-        $dbConnection->beginTransaction();
-        $locker->acquireTransactionLevelLock(
-            $dbConnection,
-            $postgresLockId2,
-        );
-
-        try {
-            $locker->releaseSessionLevelLock(
-                $dbConnection,
-                $postgresLockId2,
-                PostgresAdvisoryLockLevelEnum::Transaction,
-            );
-        } catch (\InvalidArgumentException $exception) {
-            $this->assertSame(
-                'Transaction-level advisory lock cannot be released',
-                $exception->getMessage(),
-            );
-        }
     }
 
     private function initLocker(): PostgresAdvisoryLocker

@@ -63,13 +63,8 @@ final class PostgresAdvisoryLocker
     public function releaseSessionLevelLock(
         PDO $dbConnection,
         PostgresLockId $postgresLockId,
-        PostgresAdvisoryLockLevelEnum $level = PostgresAdvisoryLockLevelEnum::Session,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
-        if ($level === PostgresAdvisoryLockLevelEnum::Transaction) {
-            throw new \InvalidArgumentException('Transaction-level advisory lock cannot be released');
-        }
-
         $sql = match ($accessMode) {
             PostgresLockAccessModeEnum::Exclusive => 'SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id);',
             PostgresLockAccessModeEnum::Share => 'SELECT PG_ADVISORY_UNLOCK_SHARED(:class_id, :object_id);',
