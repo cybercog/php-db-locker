@@ -47,6 +47,8 @@ final class PostgresAdvisoryLocker
 
     /**
      * Acquire a transaction-level advisory lock with configurable wait and access modes.
+     *
+     * TODO: Do we need low-level API?
      */
     public function acquireTransactionLevelLock(
         PDO $dbConnection,
@@ -94,6 +96,7 @@ final class PostgresAdvisoryLocker
      * Acquire a session-level advisory lock with configurable wait and access modes.
      *
      * TODO: Write that transaction-level is recommended.
+     * TODO: Do we need low-level API?
      */
     public function acquireSessionLevelLock(
         PDO $dbConnection,
