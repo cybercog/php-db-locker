@@ -20,6 +20,6 @@ namespace Cog\DbLocker\Locker;
  */
 enum PostgresAdvisoryLockWaitModeEnum
 {
-    case NonBlocking;
     case Blocking;
+    case NonBlocking;
 }
