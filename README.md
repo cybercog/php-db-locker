@@ -41,7 +41,6 @@ $dbConnection->beginTransaction();
 $isLockAcquired = $locker->acquireTransactionLevelLock(
     $dbConnection,
     $lockId,
-    \Cog\DbLocker\Locker\PostgresAdvisoryLockLevelEnum::Transaction,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockWaitModeEnum::NonBlocking,
     \Cog\DbLocker\Locker\PostgresLockAccessModeEnum::Exclusive,
 );
@@ -64,7 +63,6 @@ $lockId = \Cog\DbLocker\LockId\PostgresLockId::fromKeyValue('user', '4');
 $isLockAcquired = $locker->acquireSessionLevelLock(
     $dbConnection,
     $lockId,
-    \Cog\DbLocker\Locker\PostgresAdvisoryLockLevelEnum::Session,
     \Cog\DbLocker\Locker\PostgresAdvisoryLockWaitModeEnum::NonBlocking,
     \Cog\DbLocker\Locker\PostgresLockAccessModeEnum::Exclusive,
 );
