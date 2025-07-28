@@ -15,7 +15,7 @@ namespace Cog\DbLocker\Postgres;
 
 use InvalidArgumentException;
 
-final class PostgresLockId
+final class PostgresLockKey
 {
     private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
@@ -39,20 +39,20 @@ final class PostgresLockId
         }
     }
 
-    public static function fromKeyValue(
-        string $key,
+    public static function create(
+        string $namespace,
         string $value = '',
     ): self {
         return new self(
-            classId: self::convertStringToSignedInt32($key),
+            classId: self::convertStringToSignedInt32($namespace),
             objectId: self::convertStringToSignedInt32($value),
             // TODO: Do we need to sanitize it?
             // TODO: Do we need to omit ":" on end if no value is passed
-            humanReadableValue: "$key:$value",
+            humanReadableValue: "$namespace:$value",
         );
     }
 
-    public static function fromIntKeys(
+    public static function createFromInternalIds(
         int $classId,
         int $objectId,
     ): self {

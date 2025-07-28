@@ -35,7 +35,7 @@ composer require cybercog/php-db-locker
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockId = \Cog\DbLocker\Postgres\PostgresLockId::fromKeyValue('user', '4');
+$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 $dbConnection->beginTransaction();
 $lock = $locker->acquireSessionLevelLockHandler(
@@ -58,7 +58,7 @@ $dbConnection->commit();
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockId = \Cog\DbLocker\Postgres\PostgresLockId::fromKeyValue('user', '4');
+$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 try {
     $lock = $locker->acquireSessionLevelLockHandler(

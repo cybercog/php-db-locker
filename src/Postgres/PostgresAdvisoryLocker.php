@@ -16,8 +16,8 @@ namespace Cog\DbLocker\Postgres;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockLevelEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum;
-use Cog\DbLocker\Postgres\LockHandle\PostgresSessionLevelLockHandle;
-use Cog\DbLocker\Postgres\LockHandle\PostgresTransactionLevelLockHandle;
+use Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle;
+use Cog\DbLocker\Postgres\LockHandle\TransactionLevelLockHandle;
 use LogicException;
 use PDO;
 
@@ -30,11 +30,11 @@ final class PostgresAdvisoryLocker
      */
     public function acquireTransactionLevelLockHandler(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
+        PostgresLockKey $postgresLockId,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): PostgresTransactionLevelLockHandle {
-        return new PostgresTransactionLevelLockHandle(
+    ): TransactionLevelLockHandle {
+        return new TransactionLevelLockHandle(
             wasAcquired: $this->acquireLock(
                 $dbConnection,
                 $postgresLockId,
@@ -50,7 +50,7 @@ final class PostgresAdvisoryLocker
      */
     public function acquireTransactionLevelLock(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
+        PostgresLockKey $postgresLockId,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
@@ -71,11 +71,11 @@ final class PostgresAdvisoryLocker
      */
     public function acquireSessionLevelLockHandler(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
+        PostgresLockKey $postgresLockId,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): PostgresSessionLevelLockHandle {
-        return new PostgresSessionLevelLockHandle(
+    ): SessionLevelLockHandle {
+        return new SessionLevelLockHandle(
             $dbConnection,
             $this,
             $postgresLockId,
@@ -97,7 +97,7 @@ final class PostgresAdvisoryLocker
      */
     public function acquireSessionLevelLock(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
+        PostgresLockKey $postgresLockId,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
@@ -115,7 +115,7 @@ final class PostgresAdvisoryLocker
      */
     public function releaseSessionLevelLock(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
+        PostgresLockKey $postgresLockId,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
         $sql = match ($accessMode) {
@@ -151,7 +151,7 @@ final class PostgresAdvisoryLocker
 
     private function acquireLock(
         PDO $dbConnection,
-        PostgresLockId $postgresLockId,
+        PostgresLockKey $postgresLockId,
         PostgresLockLevelEnum $level,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,

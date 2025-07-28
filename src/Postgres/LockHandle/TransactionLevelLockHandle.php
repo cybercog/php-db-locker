@@ -16,7 +16,7 @@ namespace Cog\DbLocker\Postgres\LockHandle;
 /**
  * @internal
  */
-final class PostgresTransactionLevelLockHandle
+final class TransactionLevelLockHandle
 {
     public function __construct(
         public readonly bool $wasAcquired,

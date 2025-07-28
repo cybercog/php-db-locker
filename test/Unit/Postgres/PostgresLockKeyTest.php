@@ -13,11 +13,11 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Unit\Postgres;
 
-use Cog\DbLocker\Postgres\PostgresLockId;
+use Cog\DbLocker\Postgres\PostgresLockKey;
 use Cog\Test\DbLocker\Unit\AbstractUnitTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
-final class PostgresLockIdTest extends AbstractUnitTestCase
+final class PostgresLockKeyTest extends AbstractUnitTestCase
 {
     private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
@@ -29,7 +29,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
         int $expectedClassId,
         int $expectedObjectId,
     ): void {
-        $postgresLockId = PostgresLockId::fromKeyValue($key, $value);
+        $postgresLockId = PostgresLockKey::create($key, $value);
 
         $this->assertSame($expectedClassId, $postgresLockId->classId);
         $this->assertSame($expectedObjectId, $postgresLockId->objectId);
@@ -58,7 +58,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
         int $classId,
         int $objectId,
     ): void {
-        $lockId = PostgresLockId::fromIntKeys($classId, $objectId);
+        $lockId = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
         $this->assertSame($classId, $lockId->classId);
         $this->assertSame($objectId, $lockId->objectId);
@@ -95,7 +95,7 @@ final class PostgresLockIdTest extends AbstractUnitTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
-        $lockId = PostgresLockId::fromIntKeys($classId, $objectId);
+        $lockId = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
         $this->assertSame($classId, $lockId->classId);
         $this->assertSame($objectId, $lockId->objectId);

@@ -15,7 +15,7 @@ namespace Cog\Test\DbLocker\Integration\Postgres;
 
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\PostgresAdvisoryLocker;
-use Cog\DbLocker\Postgres\PostgresLockId;
+use Cog\DbLocker\Postgres\PostgresLockKey;
 use Cog\Test\DbLocker\Integration\AbstractIntegrationTestCase;
 use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -31,7 +31,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
 
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
@@ -62,7 +62,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $dbConnection->beginTransaction();
 
         $isLockAcquired = $locker->acquireTransactionLevelLock(
@@ -93,7 +93,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromIntKeys(self::DB_INT32_VALUE_MIN, 0);
+        $postgresLockId = PostgresLockKey::createFromInternalIds(self::DB_INT32_VALUE_MIN, 0);
 
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
@@ -131,7 +131,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
 
         $isLockAcquired1 = $locker->acquireSessionLevelLock(
             $dbConnection,
@@ -152,8 +152,8 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId1 = PostgresLockId::fromKeyValue('test1');
-        $postgresLockId2 = PostgresLockId::fromKeyValue('test2');
+        $postgresLockId1 = PostgresLockKey::create('test1');
+        $postgresLockId2 = PostgresLockKey::create('test2');
 
         $isLock1Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
@@ -176,7 +176,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $postgresLockId,
@@ -198,7 +198,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $postgresLockId,
@@ -234,7 +234,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $postgresLockId,
@@ -270,7 +270,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $postgresLockId,
@@ -293,7 +293,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $postgresLockId,
@@ -318,7 +318,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $postgresLockId,
@@ -345,7 +345,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
 
         $isLockReleased = $locker->releaseSessionLevelLock($dbConnection, $postgresLockId);
 
@@ -358,7 +358,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $postgresLockId,
@@ -377,15 +377,15 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $dbConnection = $this->initPostgresPdoConnection();
         $locker->acquireSessionLevelLock(
             $dbConnection,
-            PostgresLockId::fromKeyValue('test'),
+            PostgresLockKey::create('test'),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection,
-            PostgresLockId::fromKeyValue('test'),
+            PostgresLockKey::create('test'),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection,
-            PostgresLockId::fromKeyValue('test2'),
+            PostgresLockKey::create('test2'),
         );
 
         $locker->releaseAllSessionLevelLocks($dbConnection);
@@ -408,10 +408,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
-        $postgresLockId1 = PostgresLockId::fromKeyValue('test');
-        $postgresLockId2 = PostgresLockId::fromKeyValue('test2');
-        $postgresLockId3 = PostgresLockId::fromKeyValue('test3');
-        $postgresLockId4 = PostgresLockId::fromKeyValue('test4');
+        $postgresLockId1 = PostgresLockKey::create('test');
+        $postgresLockId2 = PostgresLockKey::create('test2');
+        $postgresLockId3 = PostgresLockKey::create('test3');
+        $postgresLockId4 = PostgresLockKey::create('test4');
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $postgresLockId1,
@@ -445,7 +445,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
 
         $locker->acquireTransactionLevelLock(
             $dbConnection,
@@ -458,7 +458,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $dbConnection1->beginTransaction();
         $locker->acquireSessionLevelLock(
             $dbConnection1,
@@ -479,7 +479,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $dbConnection->beginTransaction();
         $locker->acquireTransactionLevelLock(
             $dbConnection,
@@ -496,7 +496,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $dbConnection->beginTransaction();
         $locker->acquireTransactionLevelLock(
             $dbConnection,
@@ -513,7 +513,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $dbConnection->beginTransaction();
         $locker->acquireTransactionLevelLock(
             $dbConnection,
@@ -529,7 +529,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId = PostgresLockId::fromKeyValue('test');
+        $postgresLockId = PostgresLockKey::create('test');
         $dbConnection->beginTransaction();
         $locker->acquireTransactionLevelLock(
             $dbConnection,
@@ -547,8 +547,8 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $postgresLockId1 = PostgresLockId::fromKeyValue('test');
-        $postgresLockId2 = PostgresLockId::fromKeyValue('test2');
+        $postgresLockId1 = PostgresLockKey::create('test');
+        $postgresLockId2 = PostgresLockKey::create('test2');
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $postgresLockId1,
