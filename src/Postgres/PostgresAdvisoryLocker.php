@@ -28,7 +28,7 @@ final class PostgresAdvisoryLocker
      *
      * TODO: Cover with tests
      */
-    public function acquireTransactionLevelLockHandler(
+    public function acquireTransactionLevelLock(
         PDO $dbConnection,
         PostgresLockKey $postgresLockId,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
@@ -46,32 +46,12 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Acquire a transaction-level advisory lock with configurable wait and access modes.
-     *
-     * TODO: Do we need low-level API?
-     */
-    public function acquireTransactionLevelLock(
-        PDO $dbConnection,
-        PostgresLockKey $postgresLockId,
-        PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
-        PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): bool {
-        return $this->acquireLock(
-            $dbConnection,
-            $postgresLockId,
-            PostgresLockLevelEnum::Transaction,
-            $waitMode,
-            $accessMode,
-        );
-    }
-
-    /**
      * Acquire a session-level advisory lock with configurable wait and access modes.
      *
      * TODO: Write that transaction-level is recommended.
      * TODO: Cover with tests
      */
-    public function acquireSessionLevelLockHandler(
+    public function acquireSessionLevelLock(
         PDO $dbConnection,
         PostgresLockKey $postgresLockId,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
@@ -89,27 +69,6 @@ final class PostgresAdvisoryLocker
                 $waitMode,
                 $accessMode,
             ),
-        );
-    }
-
-    /**
-     * Acquire a session-level advisory lock with configurable wait and access modes.
-     *
-     * TODO: Write that transaction-level is recommended.
-     * TODO: Do we need low-level API?
-     */
-    public function acquireSessionLevelLock(
-        PDO $dbConnection,
-        PostgresLockKey $postgresLockId,
-        PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
-        PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): bool {
-        return $this->acquireLock(
-            $dbConnection,
-            $postgresLockId,
-            PostgresLockLevelEnum::Session,
-            $waitMode,
-            $accessMode,
         );
     }
 
