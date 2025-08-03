@@ -25,8 +25,6 @@ final class PostgresAdvisoryLocker
 {
     /**
      * Acquire a transaction-level advisory lock with configurable wait and access modes.
-     *
-     * TODO: Cover with tests
      */
     public function acquireTransactionLevelLock(
         PDO $dbConnection,
@@ -48,8 +46,24 @@ final class PostgresAdvisoryLocker
     /**
      * Acquire a session-level advisory lock with configurable wait and access modes.
      *
-     * TODO: Write that transaction-level is recommended.
-     * TODO: Cover with tests
+     * ⚠️ You MUST retain the returned handle in a variable.
+     * If the handle is not stored and is immediately garbage collected,
+     * the lock will be released in the lock handle __destruct method.
+     *
+     * @example
+     * $handle = $locker->acquireSessionLevelLock(...); // ✅ Lock held
+     *
+     * $locker->acquireSessionLevelLock(...); // ❌ Lock immediately released
+     *
+     * ⚠️ Transaction-level advisory locks are strongly preferred over session-level locks.
+     * Session-level locks persist beyond transactions and may lead to deadlocks
+     * or require manual cleanup (e.g. `pg_advisory_unlock_all()`).
+     *
+     * Use session-level locks only when transactional locks are not suitable
+     * (transactions are not possible or redundant).
+     *
+     * @see SessionLevelLockHandle::__destruct
+     * @see acquireTransactionLevelLock() for preferred locking strategy.
      */
     public function acquireSessionLevelLock(
         PDO $dbConnection,
