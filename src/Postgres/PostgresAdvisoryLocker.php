@@ -107,7 +107,7 @@ final class PostgresAdvisoryLocker
      *
      * TODO: Cover with tests
      */
-    public function withSessionLevelLock(
+    public function withinSessionLevelLock(
         PDO $dbConnection,
         PostgresLockKey $postgresLockKey,
         callable $callback,
