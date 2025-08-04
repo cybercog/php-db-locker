@@ -67,7 +67,7 @@ $payment = $locker->withinSessionLevelLock(
     $lockId,
     function (
         \Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle $lock, 
-    ): Payment { // Define a type of $payment variable, and it will be resolved by analyzers
+    ): Payment { // Define a type of $payment variable, so it will be resolved by analyzers
         if ($lock->wasAcquired) {
             // Execute logic if lock was successful
         } else {
