@@ -54,6 +54,30 @@ $dbConnection->commit();
 
 #### Session-level advisory lock
 
+Callback API
+
+```php
+$dbConnection = new PDO($dsn, $username, $password);
+
+$locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
+$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+
+$lock = $locker->withinSessionLevelLock(
+    $dbConnection,
+    $lockId,
+    function (\Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle $lock): Payment {
+        if ($lock->wasAcquired) {
+            // Execute logic if lock was successful
+        } else {
+            // Execute logic if lock acquisition has been failed
+        }
+    }
+    \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+    \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+);
+```
+
+Low-level API
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
