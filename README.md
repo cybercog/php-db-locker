@@ -62,16 +62,18 @@ $dbConnection = new PDO($dsn, $username, $password);
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
 $lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
-$lock = $locker->withinSessionLevelLock(
+$payment = $locker->withinSessionLevelLock(
     $dbConnection,
     $lockId,
-    function (\Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle $lock): Payment {
+    function (
+        \Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle $lock, 
+    ): Payment { // Define a type of $payment variable, and it will be resolved by analyzers
         if ($lock->wasAcquired) {
             // Execute logic if lock was successful
         } else {
             // Execute logic if lock acquisition has been failed
         }
-    }
+    },
     \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
     \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
 );
