@@ -126,7 +126,11 @@ final class PostgresAdvisoryLocker
             return $callback($lockHandle);
         }
         finally {
-            $lockHandle->release();
+            $this->releaseSessionLevelLock(
+                $dbConnection,
+                $key,
+                $accessMode,
+            );
         }
     }
 

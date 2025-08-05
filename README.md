@@ -7,6 +7,12 @@
     <a href="https://github.com/cybercog/php-db-locker/blob/master/LICENSE"><img src="https://img.shields.io/github/license/cybercog/php-db-locker.svg?style=flat-square" alt="License"></a>
 </p>
 
+## Things to decide
+
+- [ ] Do we need handle methods? Or leave simple bool for transaction and callback only for session lock
+- [ ] Should wait mode be blocking or non-blocking by default?
+- [ ] Should callback for session lock be at the end of the params?
+
 ## Introduction
 
 > WARNING! This library is currently under development and may not be stable. Use in your services at your own risk.
