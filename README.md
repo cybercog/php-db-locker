@@ -60,12 +60,12 @@ Callback API
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 $payment = $locker->withinSessionLevelLock(
-    $dbConnection,
-    $lockId,
-    function (
+    dbConnection: $dbConnection,
+    key: $lockKey,
+    callback: function (
         \Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle $lock, 
     ): Payment { // Define a type of $payment variable, so it will be resolved by analyzers
         if ($lock->wasAcquired) {
@@ -74,24 +74,25 @@ $payment = $locker->withinSessionLevelLock(
             // Execute logic if lock acquisition has been failed
         }
     },
-    \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
-    \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+    waitMode: \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+    accessMode: \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
 );
 ```
 
 Low-level API
+
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 try {
     $lock = $locker->acquireSessionLevelLock(
-        $dbConnection,
-        $lockId,
-        \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
-        \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+        dbConnection: $dbConnection,
+        key: $lockKey,
+        waitMode: \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+        accessMode: \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
     );
     if ($lock->wasAcquired) {
         // Execute logic if lock was successful

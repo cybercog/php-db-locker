@@ -7,10 +7,10 @@ namespace Cog\DbLocker\Postgres\Enum;
 /**
  * PostgresLockAccessModeEnum defines the access mode of advisory lock acquisition.
  *
- * TODO: Need string values only for tests, should add match to tests instead.
+ * TODO: Write details about access mode.
  */
-enum PostgresLockAccessModeEnum: string
+enum PostgresLockAccessModeEnum
 {
-    case Exclusive = 'ExclusiveLock';
-    case Share = 'ShareLock';
+    case Exclusive;
+    case Share;
 }

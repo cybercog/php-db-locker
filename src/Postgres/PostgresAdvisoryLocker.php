@@ -28,14 +28,14 @@ final class PostgresAdvisoryLocker
      */
     public function acquireTransactionLevelLock(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockKey,
+        PostgresLockKey $key,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): TransactionLevelLockHandle {
         return new TransactionLevelLockHandle(
             wasAcquired: $this->acquireLock(
                 $dbConnection,
-                $postgresLockKey,
+                $key,
                 PostgresLockLevelEnum::Transaction,
                 $waitMode,
                 $accessMode,
@@ -63,18 +63,18 @@ final class PostgresAdvisoryLocker
      */
     public function acquireSessionLevelLock(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockKey,
+        PostgresLockKey $key,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): SessionLevelLockHandle {
         return new SessionLevelLockHandle(
             $dbConnection,
             $this,
-            $postgresLockKey,
+            $key,
             $accessMode,
             wasAcquired: $this->acquireLock(
                 $dbConnection,
-                $postgresLockKey,
+                $key,
                 PostgresLockLevelEnum::Session,
                 $waitMode,
                 $accessMode,
@@ -94,10 +94,9 @@ final class PostgresAdvisoryLocker
      * ⚠️ Transaction-level advisory locks are strongly preferred whenever possible,
      * as they are automatically released at the end of a transaction and are less error-prone.
      * Use session-level locks only when transactional context is not available.
-     * @see acquireTransactionLevelLock() for preferred locking strategy.
      *
      * @param PDO $dbConnection Active database connection.
-     * @param PostgresLockKey $postgresLockKey Lock key to be acquired.
+     * @param PostgresLockKey $key Lock key to be acquired.
      * @param callable(SessionLevelLockHandle): TReturn $callback A callback that receives the lock handle.
      * @param PostgresLockWaitModeEnum $waitMode Whether to wait for the lock or fail immediately. Default is non-blocking.
      * @param PostgresLockAccessModeEnum $accessMode Whether to acquire a shared or exclusive lock. Default is exclusive.
@@ -106,17 +105,19 @@ final class PostgresAdvisoryLocker
      * @template TReturn
      *
      * TODO: Cover with tests
+     *@see acquireTransactionLevelLock() for preferred locking strategy.
+     *
      */
     public function withinSessionLevelLock(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockKey,
+        PostgresLockKey $key,
         callable $callback,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): mixed {
         $lockHandle = $this->acquireSessionLevelLock(
             $dbConnection,
-            $postgresLockKey,
+            $key,
             $waitMode,
             $accessMode,
         );
@@ -134,20 +135,20 @@ final class PostgresAdvisoryLocker
      */
     public function releaseSessionLevelLock(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockKey,
+        PostgresLockKey $key,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
         $sql = match ($accessMode) {
             PostgresLockAccessModeEnum::Exclusive => 'SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id);',
             PostgresLockAccessModeEnum::Share => 'SELECT PG_ADVISORY_UNLOCK_SHARED(:class_id, :object_id);',
         };
-        $sql .= " -- $postgresLockKey->humanReadableValue";
+        $sql .= " -- $key->humanReadableValue";
 
         $statement = $dbConnection->prepare($sql);
         $statement->execute(
             [
-                'class_id' => $postgresLockKey->classId,
-                'object_id' => $postgresLockKey->objectId,
+                'class_id' => $key->classId,
+                'object_id' => $key->objectId,
             ],
         );
 
@@ -170,14 +171,14 @@ final class PostgresAdvisoryLocker
 
     private function acquireLock(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockKey,
+        PostgresLockKey $key,
         PostgresLockLevelEnum $level,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
         if ($level === PostgresLockLevelEnum::Transaction && $dbConnection->inTransaction() === false) {
             throw new LogicException(
-                "Transaction-level advisory lock `$postgresLockKey->humanReadableValue` cannot be acquired outside of transaction",
+                "Transaction-level advisory lock `$key->humanReadableValue` cannot be acquired outside of transaction",
             );
         }
 
@@ -223,13 +224,13 @@ final class PostgresAdvisoryLocker
                 PostgresLockAccessModeEnum::Share,
             ] => 'SELECT PG_ADVISORY_LOCK_SHARED(:class_id, :object_id);',
         };
-        $sql .= " -- $postgresLockKey->humanReadableValue";
+        $sql .= " -- $key->humanReadableValue";
 
         $statement = $dbConnection->prepare($sql);
         $statement->execute(
             [
-                'class_id' => $postgresLockKey->classId,
-                'object_id' => $postgresLockKey->objectId,
+                'class_id' => $key->classId,
+                'object_id' => $key->objectId,
             ],
         );
 

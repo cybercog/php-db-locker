@@ -116,7 +116,11 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 'lock_object_id' => $postgresLockKey->objectId,
                 'lock_object_subid' => 2, // Using two keyed locks
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
-                'mode' => $mode->value,
+                'mode' => match ($mode) {
+                    PostgresLockAccessModeEnum::Exclusive => 'ExclusiveLock',
+                    PostgresLockAccessModeEnum::Share => 'ShareLock',
+                    default => throw new \LogicException("Unknown mode $mode->name"),
+                },
             ],
         );
 
