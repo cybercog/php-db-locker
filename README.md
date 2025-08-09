@@ -9,7 +9,6 @@
 
 ## Things to decide
 
-- [ ] Do we need handle methods? Or leave simple bool for transaction and callback only for session lock
 - [ ] Should wait mode be blocking or non-blocking by default?
 - [ ] Should callback for session lock be at the end of the params (after optional ones)?
 
