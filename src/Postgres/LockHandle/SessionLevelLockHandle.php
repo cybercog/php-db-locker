@@ -28,7 +28,7 @@ final class SessionLevelLockHandle
     public function __construct(
         private readonly PDO $dbConnection,
         private readonly PostgresAdvisoryLocker $locker,
-        public readonly PostgresLockKey $lockId,
+        public readonly PostgresLockKey $lockKey,
         public readonly PostgresLockAccessModeEnum $accessMode,
         public readonly bool $wasAcquired,
     ) {}
@@ -49,7 +49,7 @@ final class SessionLevelLockHandle
 
         $wasReleased = $this->locker->releaseSessionLevelLock(
             $this->dbConnection,
-            $this->lockId,
+            $this->lockKey,
         );
 
         if ($wasReleased) {
@@ -57,14 +57,5 @@ final class SessionLevelLockHandle
         }
 
         return $wasReleased;
-    }
-
-    /**
-     * Automatically release the lock when the handle is destroyed.
-     */
-    public function __destruct()
-    {
-        // TODO: Do we need to
-        $this->release();
     }
 }

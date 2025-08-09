@@ -7,6 +7,11 @@
     <a href="https://github.com/cybercog/php-db-locker/blob/master/LICENSE"><img src="https://img.shields.io/github/license/cybercog/php-db-locker.svg?style=flat-square" alt="License"></a>
 </p>
 
+## Things to decide
+
+- [ ] Should wait mode be blocking or non-blocking by default?
+- [ ] Should callback for session lock be at the end of the params (after optional ones)?
+
 ## Introduction
 
 > WARNING! This library is currently under development and may not be stable. Use in your services at your own risk.
@@ -38,7 +43,7 @@ $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
 $lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 $dbConnection->beginTransaction();
-$lock = $locker->acquireSessionLevelLockHandler(
+$lock = $locker->acquireSessionLevelLock(
     $dbConnection,
     $lockId,
     \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
@@ -54,18 +59,45 @@ $dbConnection->commit();
 
 #### Session-level advisory lock
 
+Callback API
+
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+
+$payment = $locker->withinSessionLevelLock(
+    dbConnection: $dbConnection,
+    key: $lockKey,
+    callback: function (
+        \Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle $lock, 
+    ): Payment { // Define a type of $payment variable, so it will be resolved by analyzers
+        if ($lock->wasAcquired) {
+            // Execute logic if lock was successful
+        } else {
+            // Execute logic if lock acquisition has been failed
+        }
+    },
+    waitMode: \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+    accessMode: \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+);
+```
+
+Low-level API
+
+```php
+$dbConnection = new PDO($dsn, $username, $password);
+
+$locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 try {
-    $lock = $locker->acquireSessionLevelLockHandler(
-        $dbConnection,
-        $lockId,
-        \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
-        \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+    $lock = $locker->acquireSessionLevelLock(
+        dbConnection: $dbConnection,
+        key: $lockKey,
+        waitMode: \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
+        accessMode: \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
     );
     if ($lock->wasAcquired) {
         // Execute logic if lock was successful

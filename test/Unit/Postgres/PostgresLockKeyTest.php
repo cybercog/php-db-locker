@@ -22,20 +22,20 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
     private const DB_INT32_VALUE_MIN = -2_147_483_648;
     private const DB_INT32_VALUE_MAX = 2_147_483_647;
 
-    #[DataProvider('provideItCanCreatePostgresLockIdFromKeyValueData')]
-    public function testItCanCreatePostgresLockIdFromKeyValue(
+    #[DataProvider('provideItCanCreatePostgresLockKeyFromNamespaceValueData')]
+    public function testItCanCreatePostgresLockKeyFromNamespaceValue(
         string $key,
         string $value,
         int $expectedClassId,
         int $expectedObjectId,
     ): void {
-        $postgresLockId = PostgresLockKey::create($key, $value);
+        $lockKey = PostgresLockKey::create($key, $value);
 
-        $this->assertSame($expectedClassId, $postgresLockId->classId);
-        $this->assertSame($expectedObjectId, $postgresLockId->objectId);
+        $this->assertSame($expectedClassId, $lockKey->classId);
+        $this->assertSame($expectedObjectId, $lockKey->objectId);
     }
 
-    public static function provideItCanCreatePostgresLockIdFromKeyValueData(): array
+    public static function provideItCanCreatePostgresLockKeyFromNamespaceValueData(): array
     {
         return [
             'key + empty value' => [
@@ -53,18 +53,18 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         ];
     }
 
-    #[DataProvider('provideItCanCreatePostgresLockIdFromIntKeysData')]
-    public function testItCanCreatePostgresLockIdFromIntKeys(
+    #[DataProvider('provideItCanCreatePostgresLockKeyFromIntKeysData')]
+    public function testItCanCreatePostgresLockKeyFromIntKeys(
         int $classId,
         int $objectId,
     ): void {
-        $lockId = PostgresLockKey::createFromInternalIds($classId, $objectId);
+        $lockKey = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
-        $this->assertSame($classId, $lockId->classId);
-        $this->assertSame($objectId, $lockId->objectId);
+        $this->assertSame($classId, $lockKey->classId);
+        $this->assertSame($objectId, $lockKey->objectId);
     }
 
-    public static function provideItCanCreatePostgresLockIdFromIntKeysData(): array
+    public static function provideItCanCreatePostgresLockKeyFromIntKeysData(): array
     {
         return [
             'min class_id' => [
@@ -86,8 +86,8 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         ];
     }
 
-    #[DataProvider('provideItCanCreatePostgresLockIdFromOutOfRangeIntKeysData')]
-    public function testItCanNotCreatePostgresLockIdFromOutOfRangeIntKeys(
+    #[DataProvider('provideItCanCreatePostgresLockKeyFromOutOfRangeIntKeysData')]
+    public function testItCanNotCreatePostgresLockKeyFromOutOfRangeIntKeys(
         int $classId,
         int $objectId,
         string $expectedExceptionMessage,
@@ -95,13 +95,13 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
-        $lockId = PostgresLockKey::createFromInternalIds($classId, $objectId);
+        $lockKey = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
-        $this->assertSame($classId, $lockId->classId);
-        $this->assertSame($objectId, $lockId->objectId);
+        $this->assertSame($classId, $lockKey->classId);
+        $this->assertSame($objectId, $lockKey->objectId);
     }
 
-    public static function provideItCanCreatePostgresLockIdFromOutOfRangeIntKeysData(): array
+    public static function provideItCanCreatePostgresLockKeyFromOutOfRangeIntKeysData(): array
     {
         return [
             'min class_id' => [

@@ -44,39 +44,39 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     protected function assertPgAdvisoryLockExistsInConnection(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockId,
+        PostgresLockKey $postgresLockKey,
         PostgresLockAccessModeEnum $mode = PostgresLockAccessModeEnum::Exclusive,
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection(
             $dbConnection,
-            $postgresLockId,
+            $postgresLockKey,
             $mode,
         );
 
-        $lockIdString = $postgresLockId->humanReadableValue;
+        $lockKeyString = $postgresLockKey->humanReadableValue;
 
         $this->assertTrue(
             $row !== null,
-            "Lock id `$lockIdString` does not exists",
+            "Lock id `$lockKeyString` does not exists",
         );
     }
 
     protected function assertPgAdvisoryLockMissingInConnection(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockId,
+        PostgresLockKey $postgresLockKey,
         PostgresLockAccessModeEnum $mode = PostgresLockAccessModeEnum::Exclusive,
     ): void {
         $row = $this->findPostgresAdvisoryLockInConnection(
             $dbConnection,
-            $postgresLockId,
+            $postgresLockKey,
             $mode,
         );
 
-        $lockIdString = $postgresLockId->humanReadableValue;
+        $lockKeyString = $postgresLockKey->humanReadableValue;
 
         $this->assertTrue(
             $row === null,
-            "Lock id `$lockIdString` is present",
+            "Lock id `$lockKeyString` is present",
         );
     }
 
@@ -95,7 +95,7 @@ abstract class AbstractIntegrationTestCase extends TestCase
 
     private function findPostgresAdvisoryLockInConnection(
         PDO $dbConnection,
-        PostgresLockKey $postgresLockId,
+        PostgresLockKey $postgresLockKey,
         PostgresLockAccessModeEnum $mode,
     ): object | null {
         $statement = $dbConnection->prepare(
@@ -112,11 +112,15 @@ abstract class AbstractIntegrationTestCase extends TestCase
         );
         $statement->execute(
             [
-                'lock_class_id' => $postgresLockId->classId,
-                'lock_object_id' => $postgresLockId->objectId,
+                'lock_class_id' => $postgresLockKey->classId,
+                'lock_object_id' => $postgresLockKey->objectId,
                 'lock_object_subid' => 2, // Using two keyed locks
                 'connection_pid' => $dbConnection->pgsqlGetPid(),
-                'mode' => $mode->value,
+                'mode' => match ($mode) {
+                    PostgresLockAccessModeEnum::Exclusive => 'ExclusiveLock',
+                    PostgresLockAccessModeEnum::Share => 'ShareLock',
+                    default => throw new \LogicException("Unknown mode $mode->name"),
+                },
             ],
         );
 
