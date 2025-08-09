@@ -566,6 +566,30 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey2);
     }
 
+    public function testItCanExecuteCodeWithinSessionLock(): void
+    {
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        $x = 2;
+        $y = 3;
+
+        $result = $locker->withinSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            function () use ($dbConnection, $lockKey, $x, $y): int {
+                $this->assertPgAdvisoryLocksCount(1);
+                $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
+
+                return $x + $y;
+            },
+        );
+
+        $this->assertSame(5, $result);
+        $this->assertPgAdvisoryLocksCount(0);
+        $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey);
+    }
+
     private function initLocker(): PostgresAdvisoryLocker
     {
         return new PostgresAdvisoryLocker();

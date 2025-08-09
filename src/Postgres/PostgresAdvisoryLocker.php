@@ -81,6 +81,9 @@ final class PostgresAdvisoryLocker
      * ⚠️ Transaction-level advisory locks are strongly preferred whenever possible,
      * as they are automatically released at the end of a transaction and are less error-prone.
      * Use session-level locks only when transactional context is not available.
+     * @see acquireTransactionLevelLock() for preferred locking strategy.
+     *
+     * @template TReturn
      *
      * @param PDO $dbConnection Active database connection.
      * @param PostgresLockKey $key Lock key to be acquired.
@@ -88,12 +91,6 @@ final class PostgresAdvisoryLocker
      * @param PostgresLockWaitModeEnum $waitMode Whether to wait for the lock or fail immediately. Default is non-blocking.
      * @param PostgresLockAccessModeEnum $accessMode Whether to acquire a shared or exclusive lock. Default is exclusive.
      * @return TReturn The return value of the callback.
-     *
-     * @template TReturn
-     *
-     * TODO: Cover with tests
-     * @see acquireTransactionLevelLock() for preferred locking strategy.
-     *
      */
     public function withinSessionLevelLock(
         PDO $dbConnection,
