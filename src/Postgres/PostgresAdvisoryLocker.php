@@ -17,7 +17,6 @@ use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockLevelEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum;
 use Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle;
-use Cog\DbLocker\Postgres\LockHandle\TransactionLevelLockHandle;
 use LogicException;
 use PDO;
 
@@ -31,30 +30,18 @@ final class PostgresAdvisoryLocker
         PostgresLockKey $key,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): TransactionLevelLockHandle {
-        return new TransactionLevelLockHandle(
-            wasAcquired: $this->acquireLock(
-                $dbConnection,
-                $key,
-                PostgresLockLevelEnum::Transaction,
-                $waitMode,
-                $accessMode,
-            ),
+    ): bool {
+        return $this->acquireLock(
+            $dbConnection,
+            $key,
+            PostgresLockLevelEnum::Transaction,
+            $waitMode,
+            $accessMode,
         );
     }
 
     /**
      * Acquire a session-level advisory lock with configurable wait and access modes.
-     *
-     * ⚠️ You MUST retain the returned handle in a variable.
-     * If the handle is not stored and is immediately garbage collected,
-     * the lock will be released in the lock handle __destruct method.
-     * @see SessionLevelLockHandle::__destruct
-     *
-     * @example
-     * $handle = $locker->acquireSessionLevelLock(...); // ✅ Lock held
-     *
-     * $locker->acquireSessionLevelLock(...); // ❌ Lock immediately released
      *
      * ⚠️ Transaction-level advisory locks are strongly preferred whenever possible,
      * as they are automatically released at the end of a transaction and are less error-prone.
@@ -94,7 +81,6 @@ final class PostgresAdvisoryLocker
      * ⚠️ Transaction-level advisory locks are strongly preferred whenever possible,
      * as they are automatically released at the end of a transaction and are less error-prone.
      * Use session-level locks only when transactional context is not available.
-     * @see acquireTransactionLevelLock() for preferred locking strategy.
      *
      * @param PDO $dbConnection Active database connection.
      * @param PostgresLockKey $key Lock key to be acquired.
@@ -106,6 +92,8 @@ final class PostgresAdvisoryLocker
      * @template TReturn
      *
      * TODO: Cover with tests
+     * @see acquireTransactionLevelLock() for preferred locking strategy.
+     *
      */
     public function withinSessionLevelLock(
         PDO $dbConnection,

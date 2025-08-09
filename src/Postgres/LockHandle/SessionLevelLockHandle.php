@@ -58,13 +58,4 @@ final class SessionLevelLockHandle
 
         return $wasReleased;
     }
-
-    /**
-     * Automatically release the lock when the handle is destroyed.
-     */
-    public function __destruct()
-    {
-        // TODO: Do we need to
-        $this->release();
-    }
 }
