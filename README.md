@@ -9,6 +9,7 @@
 
 ## Things to decide
 
+- [ ] Keep only PDO implementation, or make Doctrine/Eloquent drivers too?
 - [ ] Should wait mode be blocking or non-blocking by default?
 - [ ] Should callback for session lock be at the end of the params (after optional ones)?
 
