@@ -2,10 +2,13 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\DbConnection;
+namespace Cog\DbLocker\DbConnectionAdapter;
 
-interface DbConnectionInterface
+interface DbConnectionAdapterInterface
 {
+    public const PLATFORM_MYSQL = 'mysql';
+    public const PLATFORM_POSTGRESQL = 'postgresql';
+
     /**
      * Execute a SQL query and return the first column of the first row.
      *
@@ -13,7 +16,10 @@ interface DbConnectionInterface
      * @param array<string, mixed> $parameters Parameters to bind to the query
      * @return mixed The value from the first column of the first row
      */
-    public function executeAndFetchColumn(string $sql, array $parameters = []): mixed;
+    public function executeAndFetchColumn(
+        string $sql,
+        array $parameters = [],
+    ): mixed;
 
     /**
      * Check if the connection is currently inside a transaction.
@@ -21,4 +27,6 @@ interface DbConnectionInterface
      * @return bool True if inside a transaction, false otherwise
      */
     public function isInTransaction(): bool;
+
+    public function getPlatformName(): string;
 }

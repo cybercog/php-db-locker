@@ -48,7 +48,7 @@ final class PostgresLockKey
             objectId: self::convertStringToSignedInt32($value),
             // TODO: Do we need to sanitize it?
             // TODO: Do we need to omit ":" on end if no value is passed
-            humanReadableValue: "$namespace:$value",
+            humanReadableValue: "$namespace|$value",
         );
     }
 

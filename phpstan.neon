@@ -1,0 +1,7 @@
+parameters:
+    level: 10
+    checkUninitializedProperties: true
+    paths:
+        - src
+    excludePaths:
+        - vendor

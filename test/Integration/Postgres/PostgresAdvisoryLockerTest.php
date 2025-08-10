@@ -229,8 +229,8 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     #[DataProvider('provideItCanNotReleaseLockOfDifferentModesData')]
     public function testItCanNotReleaseLockOfDifferentModes(
-        PostgresLockAccessModeEnum $acquireMode,
-        PostgresLockAccessModeEnum $releaseMode,
+        PostgresLockAccessModeEnum $acquireAccessMode,
+        PostgresLockAccessModeEnum $releaseAccessMode,
     ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
@@ -238,18 +238,18 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
-            accessMode: $acquireMode,
+            accessMode: $acquireAccessMode,
         );
 
         $isLockReleased = $locker->releaseSessionLevelLock(
             $dbConnection,
             $lockKey,
-            accessMode: $releaseMode,
+            accessMode: $releaseAccessMode,
         );
 
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(1);
-        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $acquireMode);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $acquireAccessMode);
     }
 
     public static function provideItCanNotReleaseLockOfDifferentModesData(): array
@@ -440,7 +440,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(
-            'Transaction-level advisory lock `test:` cannot be acquired outside of transaction',
+            'Transaction-level advisory lock `test|` cannot be acquired outside of transaction',
         );
 
         $locker = $this->initLocker();

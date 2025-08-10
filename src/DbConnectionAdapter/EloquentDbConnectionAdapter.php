@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\DbConnection;
+namespace Cog\DbLocker\DbConnectionAdapter;
 
 use Illuminate\Database\Connection;
+use Illuminate\Database\MySqlConnection;
+use Illuminate\Database\PostgresConnection;
 use Illuminate\Database\QueryException;
 use RuntimeException;
 
@@ -14,23 +16,25 @@ use RuntimeException;
  * This adapter wraps an Illuminate\Database\Connection instance and provides
  * a consistent interface for database operations across different database drivers.
  */
-final class EloquentDbConnection implements
-    DbConnectionInterface
+final class EloquentDbConnectionAdapter implements
+    DbConnectionAdapterInterface
 {
     public function __construct(
-        private Connection $connection,
+        private readonly Connection $dbConnection,
     ) {}
 
     /**
      * @inheritDoc
      */
-    public function executeAndFetchColumn(string $sql, array $parameters = []): mixed
-    {
+    public function executeAndFetchColumn(
+        string $sql,
+        array $parameters = [],
+    ): mixed {
         try {
             // Convert named parameters to positional parameters for Eloquent
             $bindings = array_values($parameters);
 
-            $result = $this->connection->selectOne($sql, $bindings);
+            $result = $this->dbConnection->selectOne($sql, $bindings);
 
             if ($result === null) {
                 return null;
@@ -57,6 +61,15 @@ final class EloquentDbConnection implements
      */
     public function isInTransaction(): bool
     {
-        return $this->connection->transactionLevel() > 0;
+        return $this->dbConnection->transactionLevel() > 0;
+    }
+
+    public function getPlatformName(): string
+    {
+        return match (true) {
+            $this->dbConnection instanceof MySqlConnection => self::PLATFORM_MYSQL,
+            $this->dbConnection instanceof PostgresConnection => self::PLATFORM_POSTGRESQL,
+            default => gettype($this->dbConnection),
+        };
     }
 }

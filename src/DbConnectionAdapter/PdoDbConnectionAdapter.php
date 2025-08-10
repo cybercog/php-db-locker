@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\DbConnection;
+namespace Cog\DbLocker\DbConnectionAdapter;
 
 use PDO;
 use PDOStatement;
@@ -14,18 +14,20 @@ use RuntimeException;
  * This adapter wraps a PDO instance and provides a consistent interface
  * for database operations across different database drivers.
  */
-final class PdoDbConnection implements
-    DbConnectionInterface
+final class PdoDbConnectionAdapter implements
+    DbConnectionAdapterInterface
 {
     public function __construct(
-        private PDO $pdo,
+        private readonly PDO $pdo,
     ) {}
 
     /**
      * @inheritDoc
      */
-    public function executeAndFetchColumn(string $sql, array $parameters = []): mixed
-    {
+    public function executeAndFetchColumn(
+        string $sql,
+        array $parameters = [],
+    ): mixed {
         $statement = $this->prepareAndExecute($sql, $parameters);
 
         $result = $statement->fetchColumn(0);
@@ -95,5 +97,14 @@ final class PdoDbConnection implements
                 previous: $e,
             );
         }
+    }
+
+    public function getPlatformName(): string
+    {
+        return match ($this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME)) {
+            'mysql' => self::PLATFORM_MYSQL,
+            'pgsql' => self::PLATFORM_POSTGRESQL,
+            default => $this->pdo->getAttribute(PDO::ATTR_DRIVER_NAME),
+        };
     }
 }
