@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace Cog\DbLocker\Postgres;
 
+use Cog\DbLocker\DbConnectionAdapter\DbConnectionAdapterInterface;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockLevelEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum;
 use Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle;
 use LogicException;
-use PDO;
 
 final class PostgresAdvisoryLocker
 {
@@ -26,7 +26,7 @@ final class PostgresAdvisoryLocker
      * Acquire a transaction-level advisory lock with configurable wait and access modes.
      */
     public function acquireTransactionLevelLock(
-        PDO $dbConnection,
+        DbConnectionAdapterInterface $dbConnection,
         PostgresLockKey $key,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
@@ -56,7 +56,7 @@ final class PostgresAdvisoryLocker
      *
      * @template TReturn
      *
-     * @param PDO $dbConnection Active database connection.
+     * @param DbConnectionAdapterInterface $dbConnection Active database connection.
      * @param PostgresLockKey $key Lock key to be acquired.
      * @param callable(SessionLevelLockHandle): TReturn $callback A callback that receives the lock handle.
      * @param PostgresLockWaitModeEnum $waitMode Whether to wait for the lock or fail immediately. Default is non-blocking.
@@ -64,7 +64,7 @@ final class PostgresAdvisoryLocker
      * @return TReturn The return value of the callback.
      */
     public function withinSessionLevelLock(
-        PDO $dbConnection,
+        DbConnectionAdapterInterface $dbConnection,
         PostgresLockKey $key,
         callable $callback,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
@@ -98,7 +98,7 @@ final class PostgresAdvisoryLocker
      * @see acquireTransactionLevelLock() for preferred locking strategy.
      */
     public function acquireSessionLevelLock(
-        PDO $dbConnection,
+        DbConnectionAdapterInterface $dbConnection,
         PostgresLockKey $key,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
@@ -122,7 +122,7 @@ final class PostgresAdvisoryLocker
      * Release session level advisory lock.
      */
     public function releaseSessionLevelLock(
-        PDO $dbConnection,
+        DbConnectionAdapterInterface $dbConnection,
         PostgresLockKey $key,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
@@ -132,39 +132,36 @@ final class PostgresAdvisoryLocker
         };
         $sql .= " -- $key->humanReadableValue";
 
-        $statement = $dbConnection->prepare($sql);
-        $statement->execute(
+        return $dbConnection->executeAndFetchColumn(
+            $sql,
             [
                 'class_id' => $key->classId,
                 'object_id' => $key->objectId,
             ],
         );
-
-        return $statement->fetchColumn(0);
     }
 
     /**
      * Release all session level advisory locks held by the current session.
      */
     public function releaseAllSessionLevelLocks(
-        PDO $dbConnection,
+        DbConnectionAdapterInterface $dbConnection,
     ): void {
-        $statement = $dbConnection->prepare(
+        $dbConnection->executeAndFetchColumn(
             <<<'SQL'
                 SELECT PG_ADVISORY_UNLOCK_ALL();
                 SQL,
         );
-        $statement->execute();
     }
 
     private function acquireLock(
-        PDO $dbConnection,
+        DbConnectionAdapterInterface $dbConnection,
         PostgresLockKey $key,
         PostgresLockLevelEnum $level,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
-        if ($level === PostgresLockLevelEnum::Transaction && $dbConnection->inTransaction() === false) {
+        if ($level === PostgresLockLevelEnum::Transaction && $dbConnection->isInTransaction() === false) {
             throw new LogicException(
                 "Transaction-level advisory lock `$key->humanReadableValue` cannot be acquired outside of transaction",
             );
@@ -214,14 +211,12 @@ final class PostgresAdvisoryLocker
         };
         $sql .= " -- $key->humanReadableValue";
 
-        $statement = $dbConnection->prepare($sql);
-        $statement->execute(
+        return $dbConnection->executeAndFetchColumn(
+            $sql,
             [
                 'class_id' => $key->classId,
                 'object_id' => $key->objectId,
             ],
         );
-
-        return $statement->fetchColumn(0);
     }
 }

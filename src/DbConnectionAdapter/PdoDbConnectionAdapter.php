@@ -87,14 +87,14 @@ final class PdoDbConnectionAdapter implements
             }
 
             return $statement;
-        } catch (\PDOException $e) {
+        } catch (\PDOException $exception) {
             throw new RuntimeException(
                 sprintf(
                     'PDO error while executing SQL statement: %s. Error: %s',
                     $sql,
-                    $e->getMessage(),
+                    $exception->getMessage(),
                 ),
-                previous: $e,
+                previous: $exception,
             );
         }
     }

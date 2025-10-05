@@ -44,14 +44,14 @@ final class EloquentDbConnectionAdapter implements
             $resultArray = (array)$result;
 
             return reset($resultArray) ?: null;
-        } catch (QueryException $e) {
+        } catch (QueryException $exception) {
             throw new RuntimeException(
                 sprintf(
                     'Eloquent Database error while executing SQL query: %s. Error: %s',
                     $sql,
-                    $e->getMessage(),
+                    $exception->getMessage(),
                 ),
-                previous: $e,
+                previous: $exception,
             );
         }
     }

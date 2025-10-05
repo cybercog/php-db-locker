@@ -34,14 +34,14 @@ final class DoctrineDbConnectionAdapter implements
     ): mixed {
         try {
             return $this->dbConnection->fetchOne($sql, $parameters);
-        } catch (Exception $e) {
+        } catch (Exception $exception) {
             throw new RuntimeException(
                 sprintf(
                     'Doctrine DBAL error while executing SQL query: %s. Error: %s',
                     $sql,
-                    $e->getMessage(),
+                    $exception->getMessage(),
                 ),
-                previous: $e,
+                previous: $exception,
             );
         }
     }
