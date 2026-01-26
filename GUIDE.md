@@ -254,7 +254,6 @@ Do you use PgBouncer with transaction pooling?
   │
   ├─ Yes ──► Consider architectural changes, or use a dedicated
   │          non-pooled connection for session locks
-  │
   ▼ No
   │
 Use SESSION-LEVEL lock with try/finally
