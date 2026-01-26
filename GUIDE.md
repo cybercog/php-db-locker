@@ -240,23 +240,24 @@ With application-level connection pooling (persistent connections), if your proc
 
 ## Decision Flowchart
 
-```mermaid
-flowchart TD
-    Start([Start]) --> Q1{Does your operation fitwithin a single transaction?}
-    
-    Q1 -->|Yes| TXN[✅ Use TRANSACTION-LEVEL lock]
-    Q1 -->|No| Q2{Do you use PgBouncer with transaction pooling?}
-    
-    Q2 -->|Yes| PGB[⚠️ Consider architectural changes, or use a dedicated non-pooled connection for session locks]
-    Q2 -->|No| SESS[✅ Use SESSION-LEVEL lock with try/finally]
-    
-    TXN --> Safe([Auto-released on commit/rollback])
-    SESS --> Manual([Must manually release])
-    PGB --> Decide{Can you usededicated connection?}
-    
-    Decide -->|Yes| SESS
-    Decide -->|No| Refactor[Refactor to fitsingle transaction]
-    Refactor --> TXN
+```
+Start
+  │
+  ▼
+Does your operation fit within a single transaction?
+  │
+  ├─ Yes ──► Use TRANSACTION-LEVEL lock
+  │
+  ▼ No
+  │
+Do you use PgBouncer with transaction pooling?
+  │
+  ├─ Yes ──► Consider architectural changes, or use a dedicated
+  │          non-pooled connection for session locks
+  │
+  ▼ No
+  │
+Use SESSION-LEVEL lock with try/finally
 ```
 
 ## PostgreSQL Functions Reference
