@@ -89,17 +89,22 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     }
 
     #[DataProvider('provideItCanTryAcquireLockFromIntKeysCornerCasesData')]
-    public function testItCanTryAcquireLockFromIntKeysCornerCases(): void
-    {
+    public function testItCanTryAcquireLockFromIntKeysCornerCases(
+        int $classId,
+        int $objectId,
+    ): void {
+        // GIVEN: A lock key created from corner-case int32 boundary values
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
-        $lockKey = PostgresLockKey::createFromInternalIds(self::DB_INT32_VALUE_MIN, 0);
+        $lockKey = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
+        // WHEN: Acquiring a session-level lock with these boundary values
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
         );
 
+        // THEN: Lock should be acquired successfully for all int32 boundary cases
         $this->assertTrue($isLockAcquired->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
