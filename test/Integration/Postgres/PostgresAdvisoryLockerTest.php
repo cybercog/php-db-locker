@@ -215,6 +215,41 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLocksCount(0);
     }
 
+    #[DataProvider('provideItCanReleaseLockViaHandleData')]
+    public function testItCanReleaseLockViaHandle(
+        PostgresLockAccessModeEnum $accessMode,
+    ): void {
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+
+        $lockHandle = $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            accessMode: $accessMode,
+        );
+
+        $this->assertTrue($lockHandle->wasAcquired);
+        $this->assertPgAdvisoryLocksCount(1);
+
+        $wasReleased = $lockHandle->release();
+
+        $this->assertTrue($wasReleased);
+        $this->assertPgAdvisoryLocksCount(0);
+    }
+
+    public static function provideItCanReleaseLockViaHandleData(): array
+    {
+        return [
+            'exclusive lock' => [
+                PostgresLockAccessModeEnum::Exclusive,
+            ],
+            'share lock' => [
+                PostgresLockAccessModeEnum::Share,
+            ],
+        ];
+    }
+
     public static function provideItCanReleaseLockData(): array
     {
         return [
@@ -566,8 +601,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey2);
     }
 
-    public function testItCanExecuteCodeWithinSessionLock(): void
-    {
+    #[DataProvider('provideItCanExecuteCodeWithinSessionLockData')]
+    public function testItCanExecuteCodeWithinSessionLock(
+        PostgresLockAccessModeEnum $accessMode,
+    ): void {
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -577,17 +614,30 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $result = $locker->withinSessionLevelLock(
             $dbConnection,
             $lockKey,
-            function () use ($dbConnection, $lockKey, $x, $y): int {
+            function () use ($dbConnection, $lockKey, $accessMode, $x, $y): int {
                 $this->assertPgAdvisoryLocksCount(1);
-                $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
+                $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $accessMode);
 
                 return $x + $y;
             },
+            accessMode: $accessMode,
         );
 
         $this->assertSame(5, $result);
         $this->assertPgAdvisoryLocksCount(0);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey);
+    }
+
+    public static function provideItCanExecuteCodeWithinSessionLockData(): array
+    {
+        return [
+            'exclusive lock' => [
+                PostgresLockAccessModeEnum::Exclusive,
+            ],
+            'share lock' => [
+                PostgresLockAccessModeEnum::Share,
+            ],
+        ];
     }
 
     private function initLocker(): PostgresAdvisoryLocker

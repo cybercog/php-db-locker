@@ -50,6 +50,7 @@ final class SessionLevelLockHandle
         $wasReleased = $this->locker->releaseSessionLevelLock(
             $this->dbConnection,
             $this->lockKey,
+            $this->accessMode,
         );
 
         if ($wasReleased) {
