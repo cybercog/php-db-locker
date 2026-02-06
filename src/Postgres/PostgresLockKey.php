@@ -47,21 +47,19 @@ final class PostgresLockKey
      *
      * @param string $namespace Logical group (e.g. "user"). Hashed into classId.
      * @param string $value Identifier within the group (e.g. "42"). Hashed into objectId.
-     * @param string|null $humanReadableValue Optional label for SQL comment debugging. Defaults to "$namespace:$value".
+     * @param string $humanReadableValue Optional label for SQL comment debugging. Defaults to "$namespace:$value".
      */
     public static function create(
         string $namespace,
         string $value = '',
-        ?string $humanReadableValue = null,
+        string $humanReadableValue = '',
     ): self {
-        $finalValue = $humanReadableValue === null
-            ? "[{$namespace}:{$value}]"
-            : "{$humanReadableValue}[{$namespace}:{$value}]";
-
         return new self(
             classId: self::convertStringToSignedInt32($namespace),
             objectId: self::convertStringToSignedInt32($value),
-            humanReadableValue: self::sanitizeSqlComment($finalValue),
+            humanReadableValue: self::sanitizeSqlComment(
+                "{$humanReadableValue}[{$namespace}:{$value}]",
+            ),
         );
     }
 
@@ -73,21 +71,19 @@ final class PostgresLockKey
      *
      * @param int $classId First part of the two-part lock key (signed 32-bit integer).
      * @param int $objectId Second part of the two-part lock key (signed 32-bit integer).
-     * @param string|null $humanReadableValue Optional label for SQL comment debugging. Defaults to "$classId:$objectId".
+     * @param string $humanReadableValue Optional label for SQL comment debugging. Defaults to "$classId:$objectId".
      */
     public static function createFromInternalIds(
         int $classId,
         int $objectId,
-        ?string $humanReadableValue = null,
+        string $humanReadableValue = '',
     ): self {
-        $finalValue = $humanReadableValue === null
-            ? "[{$classId}:{$objectId}]"
-            : "{$humanReadableValue}[{$classId}:{$objectId}]";
-
         return new self(
             classId: $classId,
             objectId: $objectId,
-            humanReadableValue: self::sanitizeSqlComment($finalValue),
+            humanReadableValue: self::sanitizeSqlComment(
+                "{$humanReadableValue}[{$classId}:{$objectId}]",
+            ),
         );
     }
 
