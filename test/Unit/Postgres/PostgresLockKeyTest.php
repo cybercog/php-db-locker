@@ -56,18 +56,40 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         ];
     }
 
+    public function testItCanCreatePostgresLockKeyFromNamespaceValueWithCustomHumanReadableValue(): void
+    {
+        // GIVEN: A namespace, value, and a custom humanReadableValue
+        // WHEN: Creating a PostgresLockKey with a custom humanReadableValue
+        $lockKey = PostgresLockKey::create('App\Order', '42', 'order:42');
+
+        // THEN: Lock key should use the provided humanReadableValue instead of the auto-generated one
+        $this->assertSame('order:42', $lockKey->humanReadableValue);
+    }
+
+    public function testItSanitizesCustomHumanReadableValueInCreate(): void
+    {
+        // GIVEN: A custom humanReadableValue containing control characters
+        // WHEN: Creating a PostgresLockKey with that custom humanReadableValue
+        $lockKey = PostgresLockKey::create('ns', 'val', "custom\n; DROP TABLE users; --");
+
+        // THEN: humanReadableValue should have control characters stripped
+        $this->assertSame('custom; DROP TABLE users; --', $lockKey->humanReadableValue);
+    }
+
     #[DataProvider('provideItCanCreatePostgresLockKeyFromIntKeysData')]
     public function testItCanCreatePostgresLockKeyFromIntKeys(
         int $classId,
         int $objectId,
+        string $expectedHumanReadableValue,
     ): void {
         // GIVEN: Valid int32 boundary values for classId and objectId
         // WHEN: Creating a PostgresLockKey from internal IDs
         $lockKey = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
-        // THEN: Lock key should contain the exact provided classId and objectId
+        // THEN: Lock key should contain the exact provided classId and objectId and a default humanReadableValue
         $this->assertSame($classId, $lockKey->classId);
         $this->assertSame($objectId, $lockKey->objectId);
+        $this->assertSame($expectedHumanReadableValue, $lockKey->humanReadableValue);
     }
 
     public static function provideItCanCreatePostgresLockKeyFromIntKeysData(): array
@@ -76,18 +98,69 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
             'min class_id' => [
                 self::DB_INT32_VALUE_MIN,
                 0,
+                '-2147483648:0',
             ],
             'max class_id' => [
                 self::DB_INT32_VALUE_MAX,
                 0,
+                '2147483647:0',
             ],
             'min object_id' => [
                 0,
                 self::DB_INT32_VALUE_MIN,
+                '0:-2147483648',
             ],
             'max object_id' => [
                 0,
                 self::DB_INT32_VALUE_MAX,
+                '0:2147483647',
+            ],
+        ];
+    }
+
+    public function testItCanCreatePostgresLockKeyFromIntKeysWithCustomHumanReadableValue(): void
+    {
+        // GIVEN: Valid classId and objectId with a custom humanReadableValue
+        // WHEN: Creating a PostgresLockKey from internal IDs with a custom humanReadableValue
+        $lockKey = PostgresLockKey::createFromInternalIds(42, 100, 'orders:pending');
+
+        // THEN: Lock key should use the provided humanReadableValue
+        $this->assertSame(42, $lockKey->classId);
+        $this->assertSame(100, $lockKey->objectId);
+        $this->assertSame('orders:pending', $lockKey->humanReadableValue);
+    }
+
+    #[DataProvider('provideItSanitizesHumanReadableValueFromInternalIdsData')]
+    public function testItSanitizesHumanReadableValueFromInternalIds(
+        string $humanReadableValue,
+        string $expectedHumanReadableValue,
+    ): void {
+        // GIVEN: A custom humanReadableValue containing control characters
+        // WHEN: Creating a PostgresLockKey from internal IDs with that humanReadableValue
+        $lockKey = PostgresLockKey::createFromInternalIds(1, 2, $humanReadableValue);
+
+        // THEN: humanReadableValue should have control characters stripped
+        $this->assertSame($expectedHumanReadableValue, $lockKey->humanReadableValue);
+    }
+
+    public static function provideItSanitizesHumanReadableValueFromInternalIdsData(): array
+    {
+        return [
+            'newline injection' => [
+                "orders\n; DROP TABLE users; --",
+                'orders; DROP TABLE users; --',
+            ],
+            'carriage return' => [
+                "orders\rpending",
+                'orderspending',
+            ],
+            'null byte' => [
+                "orders\x00pending",
+                'orderspending',
+            ],
+            'clean input unchanged' => [
+                'orders:pending',
+                'orders:pending',
             ],
         ];
     }
