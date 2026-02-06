@@ -717,6 +717,27 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         ];
     }
 
+    public function testItSanitizesCommentToPreventSqlInjection(): void
+    {
+        // GIVEN: A lock key with newline that could break SQL comment and inject code
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create("test\n; DROP TABLE users; --", "value");
+
+        // WHEN: Acquiring a transaction-level lock with the malicious key
+        $dbConnection->beginTransaction();
+        $result = $locker->acquireTransactionLevelLock($dbConnection, $lockKey);
+
+        // THEN: The lock should be acquired without SQL errors (proving sanitization worked)
+        $this->assertTrue($result);
+        
+        // THEN: Lock should exist in database (proving query executed correctly)
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
+
+        $dbConnection->rollBack();
+    }
+
     private function initLocker(): PostgresAdvisoryLocker
     {
         return new PostgresAdvisoryLocker();
