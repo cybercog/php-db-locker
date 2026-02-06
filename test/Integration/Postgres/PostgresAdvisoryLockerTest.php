@@ -29,16 +29,19 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     public function testItCanTryAcquireLockWithinSession(
         PostgresLockAccessModeEnum $accessMode,
     ): void {
+        // GIVEN: A database connection and lock key
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
 
+        // WHEN: Acquiring a session-level lock with specified access mode
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
             accessMode: $accessMode,
         );
 
+        // THEN: Lock should be successfully acquired and exist in the database
         $this->assertTrue($isLockAcquired->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $accessMode);
@@ -60,17 +63,20 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     public function testItCanTryAcquireLockWithinTransaction(
         PostgresLockAccessModeEnum $accessMode,
     ): void {
+        // GIVEN: An active database transaction
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
         $dbConnection->beginTransaction();
 
+        // WHEN: Acquiring a transaction-level lock with specified access mode
         $isLockAcquired = $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
             accessMode: $accessMode,
         );
 
+        // THEN: Lock should be successfully acquired and exist in the database
         $this->assertTrue($isLockAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $accessMode);
@@ -134,10 +140,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCanTryAcquireLockInSameConnectionOnlyOnce(): void
     {
+        // GIVEN: A database connection and lock key
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
 
+        // WHEN: Acquiring the same lock twice in the same connection
         $isLock1Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
@@ -147,6 +155,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // THEN: Both acquisitions should succeed but only one lock exists in the database
         $this->assertTrue($isLock1Acquired->wasAcquired);
         $this->assertTrue($isLock2Acquired->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
@@ -155,11 +164,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCanTryAcquireMultipleLocksInOneConnection(): void
     {
+        // GIVEN: A database connection and two different lock keys
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey1 = PostgresLockKey::create('test1');
         $lockKey2 = PostgresLockKey::create('test2');
 
+        // WHEN: Acquiring two different locks in the same connection
         $isLock1Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey1,
@@ -169,6 +180,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey2,
         );
 
+        // THEN: Both locks should be acquired and exist in the database
         $this->assertTrue($isLock1Acquired->wasAcquired);
         $this->assertTrue($isLock2Acquired->wasAcquired);
         $this->assertPgAdvisoryLocksCount(2);
@@ -178,6 +190,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCannotAcquireSameLockInTwoConnections(): void
     {
+        // GIVEN: A lock already acquired in the first connection
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
@@ -187,11 +200,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Trying to acquire the same lock in a second connection (non-blocking)
         $connection2Lock = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
         );
 
+        // THEN: Second connection should fail to acquire the lock
         $this->assertFalse($connection2Lock->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection2, $lockKey);
@@ -201,6 +216,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     public function testItCanReleaseLock(
         PostgresLockAccessModeEnum $accessMode,
     ): void {
+        // GIVEN: A session-level lock acquired with specific access mode
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -210,12 +226,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             accessMode: $accessMode,
         );
 
+        // WHEN: Releasing the lock with the same access mode
         $isLockReleased = $locker->releaseSessionLevelLock(
             $dbConnection,
             $lockKey,
             accessMode: $accessMode,
         );
 
+        // THEN: Lock should be successfully released and removed from database
         $this->assertTrue($isLockReleased);
         $this->assertPgAdvisoryLocksCount(0);
     }
@@ -224,6 +242,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     public function testItCanReleaseLockViaHandle(
         PostgresLockAccessModeEnum $accessMode,
     ): void {
+        // GIVEN: A session-level lock acquired via handle with specific access mode
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -237,8 +256,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertTrue($lockHandle->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
 
+        // WHEN: Releasing the lock via the handle's release() method
         $wasReleased = $lockHandle->release();
 
+        // THEN: Lock should be successfully released and removed from database
         $this->assertTrue($wasReleased);
         $this->assertPgAdvisoryLocksCount(0);
     }
@@ -272,6 +293,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         PostgresLockAccessModeEnum $acquireMode,
         PostgresLockAccessModeEnum $releaseMode,
     ): void {
+        // GIVEN: A lock acquired with one access mode (exclusive or share)
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -281,12 +303,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             accessMode: $acquireMode,
         );
 
+        // WHEN: Attempting to release the lock with a different access mode
         $isLockReleased = $locker->releaseSessionLevelLock(
             $dbConnection,
             $lockKey,
             accessMode: $releaseMode,
         );
 
+        // THEN: Release should fail and lock should remain in database with original mode
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $acquireMode);
@@ -308,6 +332,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCanReleaseLockTwiceIfAcquiredTwice(): void
     {
+        // GIVEN: The same lock acquired twice in the same connection
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -320,9 +345,11 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Releasing the lock twice
         $isLockReleased1 = $locker->releaseSessionLevelLock($dbConnection, $lockKey);
         $isLockReleased2 = $locker->releaseSessionLevelLock($dbConnection, $lockKey);
 
+        // THEN: Both releases should succeed and lock should be removed from database
         $this->assertTrue($isLockReleased1);
         $this->assertTrue($isLockReleased2);
         $this->assertPgAdvisoryLocksCount(0);
@@ -330,6 +357,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCanTryAcquireLockInSecondConnectionAfterRelease(): void
     {
+        // GIVEN: A lock acquired and released in the first connection
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
@@ -343,11 +371,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Trying to acquire the same lock in a second connection
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
         );
 
+        // THEN: Second connection should successfully acquire the lock
         $this->assertTrue($isLockAcquired->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $lockKey);
@@ -355,6 +385,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCannotAcquireLockInSecondConnectionAfterOneReleaseTwiceLocked(): void
     {
+        // GIVEN: A lock acquired twice in the first connection, then released once
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
@@ -368,12 +399,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Releasing once and trying to acquire in second connection
         $isLockReleased = $locker->releaseSessionLevelLock($dbConnection1, $lockKey);
         $connection2Lock = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
         );
 
+        // THEN: Lock is still held by first connection, second connection cannot acquire
         $this->assertTrue($isLockReleased);
         $this->assertFalse($connection2Lock->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
@@ -383,18 +416,22 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCannotReleaseLockIfNotAcquired(): void
     {
+        // GIVEN: A database connection with no locks acquired
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
 
+        // WHEN: Attempting to release a lock that was never acquired
         $isLockReleased = $locker->releaseSessionLevelLock($dbConnection, $lockKey);
 
+        // THEN: Release should fail and no locks should exist in database
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(0);
     }
 
     public function testItCannotReleaseLockIfAcquiredInOtherConnection(): void
     {
+        // GIVEN: A lock acquired in the first connection
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
@@ -404,8 +441,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Attempting to release the lock from a different connection
         $isLockReleased = $locker->releaseSessionLevelLock($dbConnection2, $lockKey);
 
+        // THEN: Release should fail and lock should remain in first connection
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
@@ -413,6 +452,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCanReleaseAllLocksInConnection(): void
     {
+        // GIVEN: Multiple locks acquired in a single connection (same lock twice + different lock)
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $locker->acquireSessionLevelLock(
@@ -428,23 +468,29 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             PostgresLockKey::create('test2'),
         );
 
+        // WHEN: Releasing all session-level locks in the connection
         $locker->releaseAllSessionLevelLocks($dbConnection);
 
+        // THEN: All locks should be removed from database
         $this->assertPgAdvisoryLocksCount(0);
     }
 
     public function testItCanReleaseAllLocksInConnectionIfNoLocksWereAcquired(): void
     {
+        // GIVEN: A database connection with no locks acquired
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
 
+        // WHEN: Releasing all session-level locks when none exist
         $locker->releaseAllSessionLevelLocks($dbConnection);
 
+        // THEN: Operation should succeed with no locks in database
         $this->assertPgAdvisoryLocksCount(0);
     }
 
     public function testItCanReleaseAllLocksInConnectionButKeepsOtherConnectionLocks(): void
     {
+        // GIVEN: Two locks in first connection and two locks in second connection
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
@@ -469,8 +515,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey4,
         );
 
+        // WHEN: Releasing all locks in the first connection only
         $locker->releaseAllSessionLevelLocks($dbConnection1);
 
+        // THEN: First connection locks removed, second connection locks remain
         $this->assertPgAdvisoryLocksCount(2);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $lockKey3);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $lockKey4);
@@ -478,6 +526,9 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCannotAcquireLockWithinTransactionNotInTransaction(): void
     {
+        // GIVEN: A database connection without an active transaction
+        // WHEN: Attempting to acquire a transaction-level lock outside of a transaction
+        // THEN: Should throw LogicException with descriptive message
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(
             'Transaction-level advisory lock `test:` cannot be acquired outside of transaction',
@@ -495,6 +546,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCannotAcquireLockInSecondConnectionIfTakenWithinTransaction(): void
     {
+        // GIVEN: A session-level lock acquired within an active transaction in first connection
         $locker = $this->initLocker();
         $dbConnection1 = $this->initPostgresPdoConnection();
         $dbConnection2 = $this->initPostgresPdoConnection();
@@ -505,11 +557,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Trying to acquire the same lock in a second connection
         $connection2Lock = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
         );
 
+        // THEN: Second connection should fail to acquire the lock
         $this->assertFalse($connection2Lock->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
@@ -517,6 +571,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCanAutoReleaseLockAcquiredWithinTransactionOnCommit(): void
     {
+        // GIVEN: A transaction-level lock acquired within an active transaction
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -526,14 +581,17 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Committing the transaction
         $dbConnection->commit();
 
+        // THEN: Transaction-level lock should be automatically released
         $this->assertPgAdvisoryLocksCount(0);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey);
     }
 
     public function testItCanAutoReleaseLockAcquiredWithinTransactionOnRollback(): void
     {
+        // GIVEN: A transaction-level lock acquired within an active transaction
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -543,14 +601,17 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Rolling back the transaction
         $dbConnection->rollBack();
 
+        // THEN: Transaction-level lock should be automatically released
         $this->assertPgAdvisoryLocksCount(0);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey);
     }
 
     public function testItCanAutoReleaseLockAcquiredWithinTransactionOnConnectionKill(): void
     {
+        // GIVEN: A transaction-level lock acquired within an active transaction
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -560,13 +621,16 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Closing the database connection (setting to null)
         $dbConnection = null;
 
+        // THEN: Transaction-level lock should be automatically released
         $this->assertPgAdvisoryLocksCount(0);
     }
 
     public function testItCannotReleaseLockAcquiredWithinTransaction(): void
     {
+        // GIVEN: A transaction-level lock acquired within an active transaction
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
@@ -576,8 +640,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
         );
 
+        // WHEN: Attempting to manually release a transaction-level lock as session-level
         $isLockReleased = $locker->releaseSessionLevelLock($dbConnection, $lockKey);
 
+        // THEN: Release should fail and lock should remain in database
         $this->assertFalse($isLockReleased);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
@@ -585,6 +651,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
     public function testItCannotReleaseAllLocksAcquiredWithinTransaction(): void
     {
+        // GIVEN: One session-level lock and one transaction-level lock in the same connection
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey1 = PostgresLockKey::create('test');
@@ -599,8 +666,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey2,
         );
 
+        // WHEN: Releasing all session-level locks
         $locker->releaseAllSessionLevelLocks($dbConnection);
 
+        // THEN: Only session-level lock released, transaction-level lock remains
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey2);
@@ -610,12 +679,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     public function testItCanExecuteCodeWithinSessionLock(
         PostgresLockAccessModeEnum $accessMode,
     ): void {
+        // GIVEN: A database connection and callback function to execute
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
         $x = 2;
         $y = 3;
 
+        // WHEN: Executing code within a session-level lock using callback
         $result = $locker->withinSessionLevelLock(
             $dbConnection,
             $lockKey,
@@ -628,6 +699,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             accessMode: $accessMode,
         );
 
+        // THEN: Callback should execute successfully and lock should be auto-released
         $this->assertSame(5, $result);
         $this->assertPgAdvisoryLocksCount(0);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey);

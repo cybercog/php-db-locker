@@ -29,8 +29,11 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         int $expectedClassId,
         int $expectedObjectId,
     ): void {
+        // GIVEN: A namespace key and value string
+        // WHEN: Creating a PostgresLockKey from the namespace and value
         $lockKey = PostgresLockKey::create($key, $value);
 
+        // THEN: Lock key should have the expected classId and objectId generated via CRC32 hash
         $this->assertSame($expectedClassId, $lockKey->classId);
         $this->assertSame($expectedObjectId, $lockKey->objectId);
     }
@@ -58,8 +61,11 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         int $classId,
         int $objectId,
     ): void {
+        // GIVEN: Valid int32 boundary values for classId and objectId
+        // WHEN: Creating a PostgresLockKey from internal IDs
         $lockKey = PostgresLockKey::createFromInternalIds($classId, $objectId);
 
+        // THEN: Lock key should contain the exact provided classId and objectId
         $this->assertSame($classId, $lockKey->classId);
         $this->assertSame($objectId, $lockKey->objectId);
     }
@@ -92,6 +98,9 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         int $objectId,
         string $expectedExceptionMessage,
     ): void {
+        // GIVEN: Integer values outside the int32 range (-2147483648 to 2147483647)
+        // WHEN: Attempting to create a PostgresLockKey from out-of-range internal IDs
+        // THEN: Should throw InvalidArgumentException with descriptive message
         $this->expectException(\InvalidArgumentException::class);
         $this->expectExceptionMessage($expectedExceptionMessage);
 
