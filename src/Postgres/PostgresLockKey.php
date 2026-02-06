@@ -45,7 +45,7 @@ final class PostgresLockKey
      * Strings are hashed via CRC32 into signed 32-bit integers suitable for PostgreSQL advisory locks.
      * Use this when you have domain-level identifiers (e.g. entity class name + record ID).
      *
-     * @param string $namespace Logical group (e.g. "App\Order"). Hashed into classId.
+     * @param string $namespace Logical group (e.g. "user"). Hashed into classId.
      * @param string $value Identifier within the group (e.g. "42"). Hashed into objectId.
      * @param string|null $humanReadableValue Optional label for SQL comment debugging. Defaults to "$namespace:$value".
      */
@@ -54,12 +54,14 @@ final class PostgresLockKey
         string $value = '',
         ?string $humanReadableValue = null,
     ): self {
+        $finalValue = $humanReadableValue === null
+            ? "[{$namespace}:{$value}]"
+            : "{$humanReadableValue}[{$namespace}:{$value}]";
+
         return new self(
             classId: self::convertStringToSignedInt32($namespace),
             objectId: self::convertStringToSignedInt32($value),
-            humanReadableValue: self::sanitizeSqlComment(
-                $humanReadableValue ?? "$namespace:$value",
-            ),
+            humanReadableValue: self::sanitizeSqlComment($finalValue),
         );
     }
 
@@ -78,12 +80,14 @@ final class PostgresLockKey
         int $objectId,
         ?string $humanReadableValue = null,
     ): self {
+        $finalValue = $humanReadableValue === null
+            ? "[{$classId}:{$objectId}]"
+            : "{$humanReadableValue}[{$classId}:{$objectId}]";
+
         return new self(
             classId: $classId,
             objectId: $objectId,
-            humanReadableValue: self::sanitizeSqlComment(
-                $humanReadableValue ?? "$classId:$objectId",
-            ),
+            humanReadableValue: self::sanitizeSqlComment($finalValue),
         );
     }
 

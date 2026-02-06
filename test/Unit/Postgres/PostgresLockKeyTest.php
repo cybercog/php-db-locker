@@ -62,8 +62,8 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         // WHEN: Creating a PostgresLockKey with a custom humanReadableValue
         $lockKey = PostgresLockKey::create('App\Order', '42', 'order:42');
 
-        // THEN: Lock key should use the provided humanReadableValue instead of the auto-generated one
-        $this->assertSame('order:42', $lockKey->humanReadableValue);
+        // THEN: Lock key should use the provided humanReadableValue with namespace:value suffix
+        $this->assertSame('order:42[App\Order:42]', $lockKey->humanReadableValue);
     }
 
     public function testItSanitizesCustomHumanReadableValueInCreate(): void
@@ -72,8 +72,8 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         // WHEN: Creating a PostgresLockKey with that custom humanReadableValue
         $lockKey = PostgresLockKey::create('ns', 'val', "custom\n; DROP TABLE users; --");
 
-        // THEN: humanReadableValue should have control characters stripped
-        $this->assertSame('custom; DROP TABLE users; --', $lockKey->humanReadableValue);
+        // THEN: humanReadableValue should have control characters stripped and include namespace:value suffix
+        $this->assertSame('custom; DROP TABLE users; --[ns:val]', $lockKey->humanReadableValue);
     }
 
     #[DataProvider('provideItCanCreatePostgresLockKeyFromIntKeysData')]
@@ -98,22 +98,22 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
             'min class_id' => [
                 self::DB_INT32_VALUE_MIN,
                 0,
-                '-2147483648:0',
+                '[-2147483648:0]',
             ],
             'max class_id' => [
                 self::DB_INT32_VALUE_MAX,
                 0,
-                '2147483647:0',
+                '[2147483647:0]',
             ],
             'min object_id' => [
                 0,
                 self::DB_INT32_VALUE_MIN,
-                '0:-2147483648',
+                '[0:-2147483648]',
             ],
             'max object_id' => [
                 0,
                 self::DB_INT32_VALUE_MAX,
-                '0:2147483647',
+                '[0:2147483647]',
             ],
         ];
     }
@@ -124,10 +124,10 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         // WHEN: Creating a PostgresLockKey from internal IDs with a custom humanReadableValue
         $lockKey = PostgresLockKey::createFromInternalIds(42, 100, 'orders:pending');
 
-        // THEN: Lock key should use the provided humanReadableValue
+        // THEN: Lock key should use the provided humanReadableValue with classId:objectId suffix
         $this->assertSame(42, $lockKey->classId);
         $this->assertSame(100, $lockKey->objectId);
-        $this->assertSame('orders:pending', $lockKey->humanReadableValue);
+        $this->assertSame('orders:pending[42:100]', $lockKey->humanReadableValue);
     }
 
     #[DataProvider('provideItSanitizesHumanReadableValueFromInternalIdsData')]
@@ -148,19 +148,19 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         return [
             'newline injection' => [
                 "orders\n; DROP TABLE users; --",
-                'orders; DROP TABLE users; --',
+                'orders; DROP TABLE users; --[1:2]',
             ],
             'carriage return' => [
                 "orders\rpending",
-                'orderspending',
+                'orderspending[1:2]',
             ],
             'null byte' => [
                 "orders\x00pending",
-                'orderspending',
+                'orderspending[1:2]',
             ],
             'clean input unchanged' => [
                 'orders:pending',
-                'orders:pending',
+                'orders:pending[1:2]',
             ],
         ];
     }
@@ -203,27 +203,27 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
             'newline in namespace' => [
                 "test\n; DROP TABLE users; --",
                 'value',
-                'test; DROP TABLE users; --:value',
+                '[test; DROP TABLE users; --:value]',
             ],
             'carriage return in value' => [
                 'namespace',
                 "val\rue",
-                'namespace:value',
+                '[namespace:value]',
             ],
             'null byte in namespace' => [
                 "test\x00injection",
                 'value',
-                'testinjection:value',
+                '[testinjection:value]',
             ],
             'tabs and newlines in both' => [
                 "ns\t1",
                 "val\n2",
-                'ns1:val2',
+                '[ns1:val2]',
             ],
             'clean input unchanged' => [
                 'orders',
                 '123',
-                'orders:123',
+                '[orders:123]',
             ],
         ];
     }

@@ -531,7 +531,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         // THEN: Should throw LogicException with descriptive message
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(
-            'Transaction-level advisory lock `test:` cannot be acquired outside of transaction',
+            'Transaction-level advisory lock `[test:]` cannot be acquired outside of transaction',
         );
 
         $locker = $this->initLocker();

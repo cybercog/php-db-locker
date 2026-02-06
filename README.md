@@ -63,24 +63,24 @@ $dbConnection->commit();
 Create lock keys from human-readable identifiers:
 
 ```php
-// Auto-generated humanReadableValue: "user:4"
+// Auto-generated SQL comment: "[user:4]"
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
-// Custom humanReadableValue for better SQL comment debugging: "payment-processing"
+// Custom SQL comment: "payment-processing[user:4]"
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4', 'payment-processing');
 ```
 
 Or from pre-computed int32 pairs (e.g., from external systems):
 
 ```php
-// Auto-generated humanReadableValue: "42:100"
+// Auto-generated SQL comment: "[42:100]"
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(42, 100);
 
-// Custom humanReadableValue: "order:pending"
+// Custom SQL comment: "order:pending[42:100]"
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(42, 100, 'order:pending');
 ```
 
-The `humanReadableValue` appears in SQL comments for debugging and is automatically sanitized to prevent SQL injection.
+The SQL comment appears in PostgreSQL logs for debugging and is automatically sanitized to prevent SQL injection.
 
 #### Session-level advisory lock
 
