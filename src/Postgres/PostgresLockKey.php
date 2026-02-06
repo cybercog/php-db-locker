@@ -39,26 +39,61 @@ final class PostgresLockKey
         }
     }
 
+    /**
+     * Create a lock key from human-readable string identifiers.
+     *
+     * Strings are hashed via CRC32 into signed 32-bit integers suitable for PostgreSQL advisory locks.
+     * Use this when you have domain-level identifiers (e.g. entity class name + record ID).
+     *
+     * @param string $namespace Logical group (e.g. "user"). Hashed into classId.
+     * @param string $value Identifier within the group (e.g. "42"). Hashed into objectId.
+     * @param string $humanReadableValue Optional label for SQL comment debugging. Defaults to "$namespace:$value".
+     */
     public static function create(
         string $namespace,
         string $value = '',
+        string $humanReadableValue = '',
     ): self {
         return new self(
             classId: self::convertStringToSignedInt32($namespace),
             objectId: self::convertStringToSignedInt32($value),
-            // TODO: Do we need to sanitize it?
-            // TODO: Do we need to omit ":" on end if no value is passed
-            humanReadableValue: "$namespace:$value",
+            humanReadableValue: self::sanitizeSqlComment(
+                "{$humanReadableValue}[{$namespace}:{$value}]",
+            ),
         );
     }
 
+    /**
+     * Create a lock key from raw PostgreSQL advisory lock integer identifiers.
+     *
+     * Use this when you already have pre-computed int32 classId/objectId pairs
+     * (e.g. from an external system or database) and don't need string-to-hash conversion.
+     *
+     * @param int $classId First part of the two-part lock key (signed 32-bit integer).
+     * @param int $objectId Second part of the two-part lock key (signed 32-bit integer).
+     * @param string $humanReadableValue Optional label for SQL comment debugging. Defaults to "$classId:$objectId".
+     */
     public static function createFromInternalIds(
         int $classId,
         int $objectId,
+        string $humanReadableValue = '',
     ): self {
         return new self(
-            $classId,
-            $objectId,
+            classId: $classId,
+            objectId: $objectId,
+            humanReadableValue: self::sanitizeSqlComment(
+                "{$humanReadableValue}[{$classId}:{$objectId}]",
+            ),
+        );
+    }
+
+    private static function sanitizeSqlComment(
+        string $value,
+    ): string {
+        return preg_replace(
+            '/[\x00-\x1F\x7F]/',
+            '',
+            $value,
         );
     }
 

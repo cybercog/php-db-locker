@@ -531,7 +531,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         // THEN: Should throw LogicException with descriptive message
         $this->expectException(LogicException::class);
         $this->expectExceptionMessage(
-            'Transaction-level advisory lock `test:` cannot be acquired outside of transaction',
+            'Transaction-level advisory lock `[test:]` cannot be acquired outside of transaction',
         );
 
         $locker = $this->initLocker();
@@ -715,6 +715,27 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
                 PostgresLockAccessModeEnum::Share,
             ],
         ];
+    }
+
+    public function testItSanitizesCommentToPreventSqlInjection(): void
+    {
+        // GIVEN: A lock key with newline that could break SQL comment and inject code
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create("test\n; DROP TABLE users; --", "value");
+
+        // WHEN: Acquiring a transaction-level lock with the malicious key
+        $dbConnection->beginTransaction();
+        $lockHandle = $locker->acquireTransactionLevelLock($dbConnection, $lockKey);
+
+        // THEN: The lock should be acquired without SQL errors (proving sanitization worked)
+        $this->assertTrue($lockHandle->wasAcquired);
+        
+        // THEN: Lock should exist in database (proving query executed correctly)
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
+
+        $dbConnection->rollBack();
     }
 
     private function initLocker(): PostgresAdvisoryLocker
