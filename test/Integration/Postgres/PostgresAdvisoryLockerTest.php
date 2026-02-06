@@ -77,7 +77,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         );
 
         // THEN: Lock should be successfully acquired and exist in the database
-        $this->assertTrue($isLockAcquired);
+        $this->assertTrue($isLockAcquired->wasAcquired);
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey, $accessMode);
     }

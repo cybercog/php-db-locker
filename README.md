@@ -44,7 +44,7 @@ $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
 $lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
 
 $dbConnection->beginTransaction();
-$lock = $locker->acquireSessionLevelLock(
+$lock = $locker->acquireTransactionLevelLock(
     $dbConnection,
     $lockId,
     \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,

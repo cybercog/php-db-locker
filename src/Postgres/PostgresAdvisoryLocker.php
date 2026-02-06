@@ -17,6 +17,7 @@ use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockLevelEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum;
 use Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle;
+use Cog\DbLocker\Postgres\LockHandle\TransactionLevelLockHandle;
 use LogicException;
 use PDO;
 
@@ -30,13 +31,17 @@ final class PostgresAdvisoryLocker
         PostgresLockKey $key,
         PostgresLockWaitModeEnum $waitMode = PostgresLockWaitModeEnum::NonBlocking,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): bool {
-        return $this->acquireLock(
-            $dbConnection,
+    ): TransactionLevelLockHandle {
+        return new TransactionLevelLockHandle(
             $key,
-            PostgresLockLevelEnum::Transaction,
-            $waitMode,
             $accessMode,
+            wasAcquired: $this->acquireLock(
+                $dbConnection,
+                $key,
+                PostgresLockLevelEnum::Transaction,
+                $waitMode,
+                $accessMode,
+            ),
         );
     }
 
