@@ -58,6 +58,30 @@ if ($lock->wasAcquired) {
 $dbConnection->commit();
 ```
 
+#### Lock Key Creation
+
+Create lock keys from human-readable identifiers:
+
+```php
+// Auto-generated humanReadableValue: "user:4"
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+
+// Custom humanReadableValue for better SQL comment debugging: "payment-processing"
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4', 'payment-processing');
+```
+
+Or from pre-computed int32 pairs (e.g., from external systems):
+
+```php
+// Auto-generated humanReadableValue: "42:100"
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(42, 100);
+
+// Custom humanReadableValue: "order:pending"
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(42, 100, 'order:pending');
+```
+
+The `humanReadableValue` appears in SQL comments for debugging and is automatically sanitized to prevent SQL injection.
+
 #### Session-level advisory lock
 
 Callback API
