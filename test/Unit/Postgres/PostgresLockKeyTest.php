@@ -110,6 +110,51 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         $this->assertSame($objectId, $lockKey->objectId);
     }
 
+    #[DataProvider('provideItSanitizesHumanReadableValueForSqlCommentSafetyData')]
+    public function testItSanitizesHumanReadableValueForSqlCommentSafety(
+        string $namespace,
+        string $value,
+        string $expectedHumanReadableValue,
+    ): void {
+        // GIVEN: A namespace or value containing control characters that could break SQL comments
+        // WHEN: Creating a PostgresLockKey from the namespace and value
+        $lockKey = PostgresLockKey::create($namespace, $value);
+
+        // THEN: humanReadableValue should have control characters stripped
+        $this->assertSame($expectedHumanReadableValue, $lockKey->humanReadableValue);
+    }
+
+    public static function provideItSanitizesHumanReadableValueForSqlCommentSafetyData(): array
+    {
+        return [
+            'newline in namespace' => [
+                "test\n; DROP TABLE users; --",
+                'value',
+                'test; DROP TABLE users; --:value',
+            ],
+            'carriage return in value' => [
+                'namespace',
+                "val\rue",
+                'namespace:value',
+            ],
+            'null byte in namespace' => [
+                "test\x00injection",
+                'value',
+                'testinjection:value',
+            ],
+            'tabs and newlines in both' => [
+                "ns\t1",
+                "val\n2",
+                'ns1:val2',
+            ],
+            'clean input unchanged' => [
+                'orders',
+                '123',
+                'orders:123',
+            ],
+        ];
+    }
+
     public static function provideItCanCreatePostgresLockKeyFromOutOfRangeIntKeysData(): array
     {
         return [

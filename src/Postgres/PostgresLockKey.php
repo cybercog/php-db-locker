@@ -46,9 +46,7 @@ final class PostgresLockKey
         return new self(
             classId: self::convertStringToSignedInt32($namespace),
             objectId: self::convertStringToSignedInt32($value),
-            // TODO: Do we need to sanitize it?
-            // TODO: Do we need to omit ":" on end if no value is passed
-            humanReadableValue: "$namespace:$value",
+            humanReadableValue: self::sanitizeSqlComment("$namespace:$value"),
         );
     }
 
@@ -57,8 +55,18 @@ final class PostgresLockKey
         int $objectId,
     ): self {
         return new self(
-            $classId,
-            $objectId,
+            classId: $classId,
+            objectId: $objectId,
+        );
+    }
+
+    private static function sanitizeSqlComment(
+        string $value,
+    ): string {
+        return preg_replace(
+            '/[\x00-\x1F\x7F]/',
+            '',
+            $value,
         );
     }
 
