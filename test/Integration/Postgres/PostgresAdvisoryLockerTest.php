@@ -726,10 +726,10 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
         // WHEN: Acquiring a transaction-level lock with the malicious key
         $dbConnection->beginTransaction();
-        $result = $locker->acquireTransactionLevelLock($dbConnection, $lockKey);
+        $lockHandle = $locker->acquireTransactionLevelLock($dbConnection, $lockKey);
 
         // THEN: The lock should be acquired without SQL errors (proving sanitization worked)
-        $this->assertTrue($result);
+        $this->assertTrue($lockHandle->wasAcquired);
         
         // THEN: Lock should exist in database (proving query executed correctly)
         $this->assertPgAdvisoryLocksCount(1);
