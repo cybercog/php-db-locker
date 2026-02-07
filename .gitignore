@@ -3,6 +3,7 @@
 /.phpunit.cache
 /vendor
 .DS_STORE
+.phpactor.json
 .phpunit.result.cache
 composer.phar
 composer.lock
