@@ -16,8 +16,8 @@ namespace Cog\Test\DbLocker\Integration\Postgres;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\PostgresAdvisoryLocker;
 use Cog\DbLocker\Postgres\PostgresLockKey;
+use Cog\DbLocker\TimeoutDuration;
 use Cog\Test\DbLocker\Integration\AbstractIntegrationTestCase;
-use LogicException;
 use PHPUnit\Framework\Attributes\DataProvider;
 
 final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
@@ -38,6 +38,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
             accessMode: $accessMode,
         );
 
@@ -73,6 +74,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLockAcquired = $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
             accessMode: $accessMode,
         );
 
@@ -108,6 +110,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Lock should be acquired successfully for all int32 boundary cases
@@ -149,10 +152,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLock1Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
         $isLock2Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Both acquisitions should succeed but only one lock exists in the database
@@ -174,10 +179,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLock1Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey1,
+            TimeoutDuration::zero(),
         );
         $isLock2Acquired = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey2,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Both locks should be acquired and exist in the database
@@ -198,12 +205,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
-        // WHEN: Trying to acquire the same lock in a second connection (non-blocking)
+        // WHEN: Trying to acquire the same lock in a second connection
         $connection2Lock = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Second connection should fail to acquire the lock
@@ -223,6 +232,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
             accessMode: $accessMode,
         );
 
@@ -250,6 +260,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $lockHandle = $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
             accessMode: $accessMode,
         );
 
@@ -300,6 +311,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
             accessMode: $acquireMode,
         );
 
@@ -339,10 +351,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Releasing the lock twice
@@ -365,6 +379,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey,
+            TimeoutDuration::zero(),
         );
         $locker->releaseSessionLevelLock(
             $dbConnection1,
@@ -375,6 +390,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $isLockAcquired = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Second connection should successfully acquire the lock
@@ -393,10 +409,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey,
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Releasing once and trying to acquire in second connection
@@ -404,6 +422,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $connection2Lock = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Lock is still held by first connection, second connection cannot acquire
@@ -439,6 +458,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Attempting to release the lock from a different connection
@@ -458,14 +478,17 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             PostgresLockKey::create('test'),
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection,
             PostgresLockKey::create('test'),
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection,
             PostgresLockKey::create('test2'),
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Releasing all session-level locks in the connection
@@ -501,18 +524,22 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey1,
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey2,
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey3,
+            TimeoutDuration::zero(),
         );
         $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey4,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Releasing all locks in the first connection only
@@ -529,7 +556,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         // GIVEN: A database connection without an active transaction
         // WHEN: Attempting to acquire a transaction-level lock outside of a transaction
         // THEN: Should throw LogicException with descriptive message
-        $this->expectException(LogicException::class);
+        $this->expectException(\LogicException::class);
         $this->expectExceptionMessage(
             'Transaction-level advisory lock `[test:]` cannot be acquired outside of transaction',
         );
@@ -541,6 +568,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
     }
 
@@ -555,12 +583,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection1,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Trying to acquire the same lock in a second connection
         $connection2Lock = $locker->acquireSessionLevelLock(
             $dbConnection2,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // THEN: Second connection should fail to acquire the lock
@@ -579,6 +609,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Committing the transaction
@@ -599,6 +630,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Rolling back the transaction
@@ -619,6 +651,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Closing the database connection (setting to null)
@@ -638,6 +671,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Attempting to manually release a transaction-level lock as session-level
@@ -659,11 +693,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey1,
+            TimeoutDuration::zero(),
         );
         $dbConnection->beginTransaction();
         $locker->acquireTransactionLevelLock(
             $dbConnection,
             $lockKey2,
+            TimeoutDuration::zero(),
         );
 
         // WHEN: Releasing all session-level locks
@@ -696,6 +732,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
                 return $x + $y;
             },
+            TimeoutDuration::zero(),
             accessMode: $accessMode,
         );
 
@@ -726,16 +763,158 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
 
         // WHEN: Acquiring a transaction-level lock with the malicious key
         $dbConnection->beginTransaction();
-        $lockHandle = $locker->acquireTransactionLevelLock($dbConnection, $lockKey);
+        $lockHandle = $locker->acquireTransactionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
 
         // THEN: The lock should be acquired without SQL errors (proving sanitization worked)
         $this->assertTrue($lockHandle->wasAcquired);
-        
+
         // THEN: Lock should exist in database (proving query executed correctly)
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
 
         $dbConnection->rollBack();
+    }
+
+    public function testItCanAcquireTransactionLevelLockWithTimeout(): void
+    {
+        // GIVEN: An active transaction and a free lock key
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        $dbConnection->beginTransaction();
+
+        // WHEN: Acquiring a transaction-level lock with timeout on a free lock
+        $lockHandle = $locker->acquireTransactionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::ofSeconds(5),
+        );
+
+        // THEN: Lock should be successfully acquired
+        $this->assertTrue($lockHandle->wasAcquired);
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
+    }
+
+    public function testItCannotAcquireTransactionLevelLockWhenTimeoutExceeded(): void
+    {
+        // GIVEN: A lock already held by another connection
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        $locker->acquireSessionLevelLock(
+            $dbConnection1,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+        $dbConnection2->beginTransaction();
+
+        // WHEN: Attempting to acquire the same lock with a short timeout
+        $lockHandle = $locker->acquireTransactionLevelLock(
+            $dbConnection2,
+            $lockKey,
+            TimeoutDuration::ofMilliseconds(100),
+        );
+
+        // THEN: Lock acquisition should fail due to timeout, transaction remains usable
+        $this->assertFalse($lockHandle->wasAcquired);
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
+        $this->assertPgAdvisoryLockMissingInConnection($dbConnection2, $lockKey);
+    }
+
+    public function testItCanAcquireSessionLevelLockWithTimeout(): void
+    {
+        // GIVEN: A database connection and a free lock key
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+
+        // WHEN: Acquiring a session-level lock with timeout on a free lock
+        $lockHandle = $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::ofSeconds(5),
+        );
+
+        // THEN: Lock should be successfully acquired
+        $this->assertTrue($lockHandle->wasAcquired);
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection, $lockKey);
+    }
+
+    public function testItCannotAcquireSessionLevelLockWhenTimeoutExceeded(): void
+    {
+        // GIVEN: A lock already held by another connection
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        $locker->acquireSessionLevelLock(
+            $dbConnection1,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+
+        // WHEN: Attempting to acquire the same lock with a short timeout
+        $lockHandle = $locker->acquireSessionLevelLock(
+            $dbConnection2,
+            $lockKey,
+            TimeoutDuration::ofMilliseconds(100),
+        );
+
+        // THEN: Lock acquisition should fail due to timeout
+        $this->assertFalse($lockHandle->wasAcquired);
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
+        $this->assertPgAdvisoryLockMissingInConnection($dbConnection2, $lockKey);
+    }
+
+    public function testItResetsSessionLockTimeoutAfterAcquisition(): void
+    {
+        // GIVEN: A session-level lock acquired with a timeout
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+
+        $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::ofSeconds(5),
+        );
+
+        // WHEN: Checking the lock_timeout setting after acquisition
+        $statement = $dbConnection->query('SHOW lock_timeout');
+        $lockTimeout = $statement->fetchColumn(0);
+
+        // THEN: lock_timeout should be reset to 0 (no timeout)
+        $this->assertSame('0', $lockTimeout);
+    }
+
+    public function testItRestoresOriginalLockTimeoutAfterAcquisition(): void
+    {
+        // GIVEN: A connection with a custom lock_timeout set
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        $dbConnection->exec('SET lock_timeout = 10000'); // 10 seconds
+
+        // WHEN: Acquiring a session-level lock with a different timeout
+        $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::ofSeconds(5),
+        );
+
+        // THEN: Original lock_timeout should be restored
+        $statement = $dbConnection->query('SHOW lock_timeout');
+        $lockTimeout = $statement->fetchColumn(0);
+        $this->assertSame('10s', $lockTimeout);
     }
 
     private function initLocker(): PostgresAdvisoryLocker

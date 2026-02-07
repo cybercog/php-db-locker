@@ -10,7 +10,6 @@
 ## Things to decide
 
 - [ ] Keep only PDO implementation, or make Doctrine/Eloquent drivers too?
-- [ ] Should wait mode be blocking or non-blocking by default?
 - [ ] Should callback for session lock be at the end of the params (after optional ones)?
 
 ## Introduction
@@ -41,14 +40,16 @@ composer require cybercog/php-db-locker
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockId = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
+    namespace: 'user',
+    value: '4',
+);
 
 $dbConnection->beginTransaction();
 $lock = $locker->acquireTransactionLevelLock(
-    $dbConnection,
-    $lockId,
-    \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
-    \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+    dbConnection: $dbConnection,
+    key: $lockKey,
+    timeoutDuration: \Cog\DbLocker\TimeoutDuration::zero(),
 );
 if ($lock->wasAcquired) {
     // Execute logic if lock was successful
@@ -64,20 +65,34 @@ Create lock keys from human-readable identifiers:
 
 ```php
 // Auto-generated SQL comment: "[user:4]"
-$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
+    namespace: 'user',
+    value: '4',
+);
 
 // Custom SQL comment: "payment-processing[user:4]"
-$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4', 'payment-processing');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
+    namespace: 'user',
+    value: '4',
+    humanReadableValue: 'payment-processing',
+);
 ```
 
 Or from pre-computed int32 pairs (e.g., from external systems):
 
 ```php
 // Auto-generated SQL comment: "[42:100]"
-$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(42, 100);
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(
+    classId: 42,
+    objectId: 100,
+);
 
 // Custom SQL comment: "order:pending[42:100]"
-$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(42, 100, 'order:pending');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::createFromInternalIds(
+    classId: 42,
+    objectId: 100,
+    humanReadableValue: 'order:pending',
+ );
 ```
 
 The SQL comment appears in PostgreSQL logs for debugging and is automatically sanitized to prevent SQL injection.
@@ -90,7 +105,10 @@ Callback API
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
+    namespace: 'user',
+    value: '4',
+);
 
 $payment = $locker->withinSessionLevelLock(
     dbConnection: $dbConnection,
@@ -104,8 +122,7 @@ $payment = $locker->withinSessionLevelLock(
             // Execute logic if lock acquisition has been failed
         }
     },
-    waitMode: \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
-    accessMode: \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+    timeoutDuration: \Cog\DbLocker\TimeoutDuration::zero(),
 );
 ```
 
@@ -115,14 +132,16 @@ Low-level API
 $dbConnection = new PDO($dsn, $username, $password);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
-$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create('user', '4');
+$lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
+    namespace: 'user',
+    value: '4',
+);
 
 try {
     $lock = $locker->acquireSessionLevelLock(
         dbConnection: $dbConnection,
         key: $lockKey,
-        waitMode: \Cog\DbLocker\Postgres\Enum\PostgresLockWaitModeEnum::NonBlocking,
-        accessMode: \Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum::Exclusive,
+        timeoutDuration: \Cog\DbLocker\TimeoutDuration::zero(),
     );
     if ($lock->wasAcquired) {
         // Execute logic if lock was successful
