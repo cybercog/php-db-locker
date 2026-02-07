@@ -34,7 +34,11 @@
         "ext-pdo": "*"
     },
     "require-dev": {
+        "brick/date-time": "^0.8.1",
         "phpunit/phpunit": "^10.0"
+    },
+    "suggest": {
+        "brick/date-time": "To use TimeoutDuration::fromBrickDuration() for convenient duration creation"
     },
     "autoload": {
         "psr-4": {
