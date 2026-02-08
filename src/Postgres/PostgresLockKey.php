@@ -42,11 +42,12 @@ final class PostgresLockKey
     /**
      * Create a lock key from human-readable string identifiers.
      *
-     * Strings are hashed via CRC32 into signed 32-bit integers suitable for PostgreSQL advisory locks.
-     * Use this when you have domain-level identifiers (e.g. entity class name + record ID).
+     * Namespace and value are concatenated with a null byte separator and hashed via xxh3
+     * into a 64-bit digest, which is then split into two signed 32-bit integers (classId, objectId)
+     * suitable for PostgreSQL advisory locks.
      *
-     * @param string $namespace Logical group (e.g. "user"). Hashed into classId.
-     * @param string $value Identifier within the group (e.g. "42"). Hashed into objectId.
+     * @param string $namespace Logical group (e.g. "user"). Combined with $value for hashing.
+     * @param string $value Identifier within the group (e.g. "42"). Combined with $namespace for hashing.
      * @param string $humanReadableValue Optional label for SQL comment debugging. Defaults to "$namespace:$value".
      */
     public static function create(
@@ -54,9 +55,11 @@ final class PostgresLockKey
         string $value = '',
         string $humanReadableValue = '',
     ): self {
+        [$classId, $objectId] = self::hashToSignedInt32Pair($namespace, $value);
+
         return new self(
-            classId: self::convertStringToSignedInt32($namespace),
-            objectId: self::convertStringToSignedInt32($value),
+            classId: $classId,
+            objectId: $objectId,
             humanReadableValue: self::sanitizeSqlComment(
                 "{$humanReadableValue}[{$namespace}:{$value}]",
             ),
@@ -98,25 +101,27 @@ final class PostgresLockKey
     }
 
     /**
-     * Generates a deterministic signed 32-bit integer ID
-     * from a string for use as a Postgres advisory lock key.
+     * Hashes namespace and value into a pair of signed 32-bit integers
+     * for use as PostgreSQL advisory lock key (classId, objectId).
      *
-     * The crc32 function returns an unsigned 32-bit integer (0 to 4_294_967_295).
-     * Postgres advisory locks require a signed 32-bit integer (-2_147_483_648 to 2_147_483_647).
+     * Uses xxh3 (64-bit) on the concatenated string "namespace\0value".
+     * The null byte separator prevents collisions between different
+     * namespace/value splits (e.g. "ab"+"cd" vs "abc"+"d").
      *
-     * This method converts the unsigned crc32 result to a signed 32-bit integer,
-     * matching the way PostgreSQL interprets int4 values internally.
+     * The 64-bit digest is split into two signed 32-bit integers using
+     * native byte order, giving a combined key space of 2^64.
      *
-     * @param string $string The input string to hash into a signed int32 lock ID.
-     * @return int The signed 32-bit integer suitable for Postgres advisory locks.
+     * @return array{int, int} [classId, objectId] as signed 32-bit integers.
      */
-    private static function convertStringToSignedInt32(
-        string $string,
-    ): int {
-        $unsignedInt = crc32($string);
+    private static function hashToSignedInt32Pair(
+        string $namespace,
+        string $value,
+    ): array {
+        $hash = hash('xxh3', "{$namespace}\0{$value}", binary: true);
 
-        return $unsignedInt > 0x7FFFFFFF
-            ? $unsignedInt - 0x100000000
-            : $unsignedInt;
+        return [
+            unpack('l', substr($hash, 0, 4))[1],
+            unpack('l', substr($hash, 4, 4))[1],
+        ];
     }
 }
