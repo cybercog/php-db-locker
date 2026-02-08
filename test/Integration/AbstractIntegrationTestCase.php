@@ -16,6 +16,7 @@ namespace Cog\Test\DbLocker\Integration;
 use Cog\DbLocker\DbConnection\PdoConnectionAdapter;
 use Cog\DbLocker\ConnectionAdapterInterface;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
+use Cog\DbLocker\Postgres\PostgresAdvisoryLocker;
 use Cog\DbLocker\Postgres\PostgresLockKey;
 use PDO;
 use PHPUnit\Framework\TestCase;
@@ -50,6 +51,11 @@ abstract class AbstractIntegrationTestCase extends TestCase
     protected function initConnectionAdapter(): ConnectionAdapterInterface
     {
         return new PdoConnectionAdapter($this->initPostgresPdoConnection());
+    }
+
+    protected function initLocker(): PostgresAdvisoryLocker
+    {
+        return new PostgresAdvisoryLocker();
     }
 
     protected function assertPgAdvisoryLockExistsInConnection(

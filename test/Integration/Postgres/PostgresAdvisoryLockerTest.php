@@ -1096,9 +1096,4 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $lockTimeout = $statement->fetchColumn(0);
         $this->assertSame('10s', $lockTimeout);
     }
-
-    private function initLocker(): PostgresAdvisoryLocker
-    {
-        return new PostgresAdvisoryLocker();
-    }
 }

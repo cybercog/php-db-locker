@@ -71,6 +71,7 @@ Design decisions are documented in `adr/` — consult these before changing hash
 - PHP 8.1+ features: enums, readonly properties, named arguments, `match` expressions
 - PSR-4 autoloading: `src/` → `Cog\DbLocker\`, `test/` → `Cog\Test\DbLocker\`
 - All classes use `declare(strict_types=1)`
+- **Abstract classes** must be prefixed with `Abstract` (e.g., `AbstractLockException`, `AbstractIntegrationTestCase`)
 - SQL comments with `humanReadableValue` appended to lock queries for debugging — these must be sanitized to prevent SQL comment injection (see `sanitizeSqlComment()`)
 
 ## Git Workflow
