@@ -754,6 +754,66 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         ];
     }
 
+    public function testWithinSessionLevelLockPreservesOriginalExceptionWhenReleaseFails(): void
+    {
+        // GIVEN: A session-level lock acquired via withinSessionLevelLock callback
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $lockKey = PostgresLockKey::create('test');
+
+        // WHEN: Callback throws an exception and the connection is killed before release
+        try {
+            $locker->withinSessionLevelLock(
+                $dbConnection,
+                $lockKey,
+                function () use ($dbConnection): never {
+                    // Kill own connection's backend to make release fail
+                    $pid = $dbConnection->pgsqlGetPid();
+                    $killerConnection = $this->initPostgresPdoConnection();
+                    $killerConnection->exec("SELECT PG_TERMINATE_BACKEND($pid)");
+
+                    throw new \RuntimeException('Original error from callback');
+                },
+                TimeoutDuration::zero(),
+            );
+            $this->fail('Expected RuntimeException was not thrown');
+        } catch (\RuntimeException $e) {
+            // THEN: The original exception from callback should be preserved, not masked by release failure
+            $this->assertSame('Original error from callback', $e->getMessage());
+        } catch (\PDOException $e) {
+            $this->fail('PDOException from release should not mask the original RuntimeException: ' . $e->getMessage());
+        }
+    }
+
+    public function testWithinSessionLevelLockDoesNotReleaseWhenLockWasNotAcquired(): void
+    {
+        // GIVEN: A lock already held by another connection so the second cannot acquire it
+        $locker = $this->initLocker();
+        $dbConnection1 = $this->initPostgresPdoConnection();
+        $dbConnection2 = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        $locker->acquireSessionLevelLock(
+            $dbConnection1,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+
+        // WHEN: withinSessionLevelLock is called on second connection (lock not acquired)
+        $locker->withinSessionLevelLock(
+            $dbConnection2,
+            $lockKey,
+            function ($lockHandle): void {
+                $this->assertFalse($lockHandle->wasAcquired);
+            },
+            TimeoutDuration::zero(),
+        );
+
+        // THEN: The first connection's lock should still be intact (not decremented by a spurious release)
+        $this->assertPgAdvisoryLocksCount(1);
+        $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
+    }
+
     public function testItSanitizesCommentToPreventSqlInjection(): void
     {
         // GIVEN: A lock key with newline that could break SQL comment and inject code
