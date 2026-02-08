@@ -333,12 +333,12 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
     {
         return [
             'release exclusive lock as share' => [
-                'acquireAccessMode' => PostgresLockAccessModeEnum::Exclusive,
-                'releaseAccessMode' => PostgresLockAccessModeEnum::Share,
+                'acquireMode' => PostgresLockAccessModeEnum::Exclusive,
+                'releaseMode' => PostgresLockAccessModeEnum::Share,
             ],
             'release share lock as exclusive' => [
-                'acquireAccessMode' => PostgresLockAccessModeEnum::Share,
-                'releaseAccessMode' => PostgresLockAccessModeEnum::Exclusive,
+                'acquireMode' => PostgresLockAccessModeEnum::Share,
+                'releaseMode' => PostgresLockAccessModeEnum::Exclusive,
             ],
         ];
     }
