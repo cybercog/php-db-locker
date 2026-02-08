@@ -29,7 +29,8 @@ interface ConnectionAdapterInterface
      * @param string $sql SQL query with named parameters (e.g., :class_id)
      * @param array<string, mixed> $params Named parameters (e.g., ['class_id' => 1, 'object_id' => 2])
      * @return mixed The value of the first column (typically bool or string)
-     * @throws \Throwable Database-specific exception on error
+     *
+     * @throws \Exception Database-specific exception on error
      */
     public function fetchColumn(string $sql, array $params = []): mixed;
 
@@ -44,7 +45,8 @@ interface ConnectionAdapterInterface
      *
      * @param string $sql SQL statement with optional named parameters
      * @param array<string, mixed> $params Named parameters (e.g., ['class_id' => 1])
-     * @throws \Throwable Database-specific exception on error
+     *
+     * @throws \Exception Database-specific exception on error
      */
     public function execute(string $sql, array $params = []): void;
 
@@ -65,8 +67,8 @@ interface ConnectionAdapterInterface
      * - Doctrine DBAL: Doctrine\DBAL\Exception with getSQLState() method
      * - Cycle ORM: wraps \PDOException in its own exception
      *
-     * @param \Throwable $exception Exception to inspect
+     * @param \Exception $exception Exception to inspect
      * @return bool True if the exception indicates a lock timeout (SQLSTATE 55P03)
      */
-    public function isLockNotAvailable(\Throwable $exception): bool;
+    public function isLockNotAvailable(\Exception $exception): bool;
 }

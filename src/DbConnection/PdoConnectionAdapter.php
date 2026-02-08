@@ -56,7 +56,7 @@ final class PdoConnectionAdapter implements ConnectionAdapterInterface
         return $this->pdo->inTransaction();
     }
 
-    public function isLockNotAvailable(\Throwable $exception): bool
+    public function isLockNotAvailable(\Exception $exception): bool
     {
         // PDOException: getCode() returns SQLSTATE string
         if ($exception instanceof \PDOException) {
