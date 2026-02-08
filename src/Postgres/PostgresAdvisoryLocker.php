@@ -19,6 +19,7 @@ use Cog\DbLocker\Exception\LockReleaseException;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockLevelEnum;
 use Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle;
+use Cog\DbLocker\Postgres\LockHandle\WithinSessionLevelLockHandle;
 use Cog\DbLocker\Postgres\LockHandle\TransactionLevelLockHandle;
 use Cog\DbLocker\TimeoutDuration;
 
@@ -53,21 +54,22 @@ final class PostgresAdvisoryLocker
     }
 
     /**
-     * Acquires a session-level advisory lock and ensures its release after executing the callback.
+     * Acquires a session-level advisory lock, executes the callback only if acquired, and ensures release.
+     *
+     * The callback is invoked only when the lock is successfully acquired. If the lock
+     * is not acquired (held by another process), the callback is not called and
+     * a handle with `wasAcquired = false` is returned.
      *
      * This method guarantees that the lock is released even if an exception is thrown during execution.
      * Useful for safely wrapping critical sections that require locking.
-     *
-     * If the lock was not acquired (i.e., `wasAcquired` is `false`), it is up to the callback
-     * to decide how to handle the situation (e.g., retry, throw, log, or silently skip).
      *
      * ⚠️ Transaction-level advisory locks are strongly preferred whenever possible,
      * as they are automatically released at the end of a transaction and are less error-prone.
      * Use session-level locks only when transactional context is not available.
      *
-     * @param callable(SessionLevelLockHandle): TReturn $callback A callback that receives the lock handle.
+     * @param callable(): TReturn $callback A callback to execute while the lock is held.
      * @param TimeoutDuration $timeoutDuration Maximum wait time. Use TimeoutDuration::zero() for an immediate (non-blocking) attempt.
-     * @return TReturn The return value of the callback.
+     * @return WithinSessionLevelLockHandle<TReturn|null> Handle with wasAcquired and result of the callback (null if not acquired).
      *
      * @throws LockAcquireException If a database error occurs during lock acquisition. NOT thrown for normal lock contention.
      * @throws LockReleaseException If a database error occurs during lock release (only thrown if no other exception occurred during callback execution).
@@ -82,7 +84,7 @@ final class PostgresAdvisoryLocker
         callable $callback,
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
-    ): mixed {
+    ): WithinSessionLevelLockHandle {
         $lockHandle = $this->acquireSessionLevelLock(
             dbConnection: $dbConnection,
             key: $key,
@@ -90,24 +92,34 @@ final class PostgresAdvisoryLocker
             accessMode: $accessMode,
         );
 
+        if (!$lockHandle->wasAcquired) {
+            return new WithinSessionLevelLockHandle(
+                wasAcquired: false,
+                result: null,
+            );
+        }
+
         $exception = null;
         try {
-            return $callback($lockHandle);
+            $result = $callback();
+
+            return new WithinSessionLevelLockHandle(
+                wasAcquired: true,
+                result: $result,
+            );
         } catch (\Throwable $e) {
             $exception = $e;
             throw $e;
         } finally {
-            if ($lockHandle->wasAcquired) {
-                try {
-                    $this->releaseSessionLevelLock(
-                        dbConnection: $dbConnection,
-                        key: $key,
-                        accessMode: $accessMode,
-                    );
-                } catch (\Throwable $releaseException) {
-                    if ($exception === null) {
-                        throw $releaseException;
-                    }
+            try {
+                $this->releaseSessionLevelLock(
+                    dbConnection: $dbConnection,
+                    key: $key,
+                    accessMode: $accessMode,
+                );
+            } catch (\Throwable $releaseException) {
+                if ($exception === null) {
+                    throw $releaseException;
                 }
             }
         }
