@@ -35,6 +35,8 @@ final class PostgresAdvisoryLocker
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): TransactionLevelLockHandle {
+        $this->assertPdoExceptionMode($dbConnection);
+
         return new TransactionLevelLockHandle(
             lockKey: $key,
             accessMode: $accessMode,
@@ -76,6 +78,8 @@ final class PostgresAdvisoryLocker
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): mixed {
+        $this->assertPdoExceptionMode($dbConnection);
+
         $lockHandle = $this->acquireSessionLevelLock(
             dbConnection: $dbConnection,
             key: $key,
@@ -129,6 +133,8 @@ final class PostgresAdvisoryLocker
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): SessionLevelLockHandle {
+        $this->assertPdoExceptionMode($dbConnection);
+
         return new SessionLevelLockHandle(
             dbConnection: $dbConnection,
             locker: $this,
@@ -152,6 +158,8 @@ final class PostgresAdvisoryLocker
         PostgresLockKey $key,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
+        $this->assertPdoExceptionMode($dbConnection);
+
         $sql = match ($accessMode) {
             PostgresLockAccessModeEnum::Exclusive
             => 'SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id);',
@@ -178,6 +186,8 @@ final class PostgresAdvisoryLocker
     public function releaseAllSessionLevelLocks(
         PDO $dbConnection,
     ): void {
+        $this->assertPdoExceptionMode($dbConnection);
+
         $statement = $dbConnection->prepare(
             <<<'SQL'
                 SELECT PG_ADVISORY_UNLOCK_ALL();
@@ -283,6 +293,16 @@ final class PostgresAdvisoryLocker
                 timeoutDuration: $timeoutDuration,
             ),
         };
+    }
+
+    private function assertPdoExceptionMode(PDO $dbConnection): void
+    {
+        if ((int) $dbConnection->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) {
+            throw new \LogicException(
+                'PDO connection must use PDO::ERRMODE_EXCEPTION. '
+                . 'Set it via: $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION)',
+            );
+        }
     }
 
     private function acquireTransactionLockWithTimeout(
