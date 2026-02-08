@@ -13,6 +13,8 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Integration;
 
+use Cog\DbLocker\Connection\PdoConnectionAdapter;
+use Cog\DbLocker\ConnectionAdapterInterface;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\PostgresLockKey;
 use PDO;
@@ -43,6 +45,11 @@ abstract class AbstractIntegrationTestCase extends TestCase
                 PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             ],
         );
+    }
+
+    protected function initConnectionAdapter(): ConnectionAdapterInterface
+    {
+        return new PdoConnectionAdapter($this->initPostgresPdoConnection());
     }
 
     protected function assertPgAdvisoryLockExistsInConnection(

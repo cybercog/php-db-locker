@@ -13,12 +13,12 @@ declare(strict_types=1);
 
 namespace Cog\DbLocker\Postgres;
 
+use Cog\DbLocker\ConnectionAdapterInterface;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\Enum\PostgresLockLevelEnum;
 use Cog\DbLocker\Postgres\LockHandle\SessionLevelLockHandle;
 use Cog\DbLocker\Postgres\LockHandle\TransactionLevelLockHandle;
 use Cog\DbLocker\TimeoutDuration;
-use PDO;
 
 final class PostgresAdvisoryLocker
 {
@@ -30,18 +30,16 @@ final class PostgresAdvisoryLocker
      * @param TimeoutDuration $timeoutDuration Maximum wait time. Use TimeoutDuration::zero() for an immediate (non-blocking) attempt.
      */
     public function acquireTransactionLevelLock(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): TransactionLevelLockHandle {
-        $this->assertPdoExceptionMode($dbConnection);
-
         return new TransactionLevelLockHandle(
             lockKey: $key,
             accessMode: $accessMode,
             wasAcquired: $this->acquireLock(
-                dbConnection: $dbConnection,
+                connection: $connection,
                 key: $key,
                 level: PostgresLockLevelEnum::Transaction,
                 timeoutDuration: $timeoutDuration,
@@ -72,16 +70,14 @@ final class PostgresAdvisoryLocker
      * @template TReturn
      */
     public function withinSessionLevelLock(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         callable $callback,
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): mixed {
-        $this->assertPdoExceptionMode($dbConnection);
-
         $lockHandle = $this->acquireSessionLevelLock(
-            dbConnection: $dbConnection,
+            connection: $connection,
             key: $key,
             timeoutDuration: $timeoutDuration,
             accessMode: $accessMode,
@@ -97,7 +93,7 @@ final class PostgresAdvisoryLocker
             if ($lockHandle->wasAcquired) {
                 try {
                     $this->releaseSessionLevelLock(
-                        dbConnection: $dbConnection,
+                        connection: $connection,
                         key: $key,
                         accessMode: $accessMode,
                     );
@@ -128,20 +124,18 @@ final class PostgresAdvisoryLocker
      * @see withinSessionLevelLock() for automatic session lock management.
      */
     public function acquireSessionLevelLock(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): SessionLevelLockHandle {
-        $this->assertPdoExceptionMode($dbConnection);
-
         return new SessionLevelLockHandle(
-            dbConnection: $dbConnection,
+            connection: $connection,
             locker: $this,
             lockKey: $key,
             accessMode: $accessMode,
             wasAcquired: $this->acquireLock(
-                dbConnection: $dbConnection,
+                connection: $connection,
                 key: $key,
                 level: PostgresLockLevelEnum::Session,
                 timeoutDuration: $timeoutDuration,
@@ -154,12 +148,10 @@ final class PostgresAdvisoryLocker
      * Release session level advisory lock.
      */
     public function releaseSessionLevelLock(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
-        $this->assertPdoExceptionMode($dbConnection);
-
         $sql = match ($accessMode) {
             PostgresLockAccessModeEnum::Exclusive
             => 'SELECT PG_ADVISORY_UNLOCK(:class_id, :object_id);',
@@ -169,41 +161,29 @@ final class PostgresAdvisoryLocker
         };
         $sql .= " -- $key->humanReadableValue";
 
-        $statement = $dbConnection->prepare($sql);
-        $statement->execute(
-            [
-                'class_id' => $key->classId,
-                'object_id' => $key->objectId,
-            ],
-        );
-
-        return $statement->fetchColumn(0);
+        return $connection->fetchColumn($sql, [
+            'class_id' => $key->classId,
+            'object_id' => $key->objectId,
+        ]);
     }
 
     /**
      * Release all session level advisory locks held by the current session.
      */
     public function releaseAllSessionLevelLocks(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
     ): void {
-        $this->assertPdoExceptionMode($dbConnection);
-
-        $statement = $dbConnection->prepare(
-            <<<'SQL'
-                SELECT PG_ADVISORY_UNLOCK_ALL();
-                SQL,
-        );
-        $statement->execute();
+        $connection->execute('SELECT PG_ADVISORY_UNLOCK_ALL();');
     }
 
     private function acquireLock(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         PostgresLockLevelEnum $level,
         TimeoutDuration $timeoutDuration,
         PostgresLockAccessModeEnum $accessMode = PostgresLockAccessModeEnum::Exclusive,
     ): bool {
-        if ($level === PostgresLockLevelEnum::Transaction && $dbConnection->inTransaction() === false) {
+        if ($level === PostgresLockLevelEnum::Transaction && $connection->isTransactionActive() === false) {
             throw new \LogicException(
                 "Transaction-level advisory lock `$key->humanReadableValue` cannot be acquired outside of transaction",
             );
@@ -211,13 +191,13 @@ final class PostgresAdvisoryLocker
 
         return $timeoutDuration->toMilliseconds() === 0
             ? $this->tryAcquireLock(
-                dbConnection: $dbConnection,
+                connection: $connection,
                 key: $key,
                 level: $level,
                 accessMode: $accessMode,
             )
             : $this->acquireLockWithTimeout(
-                dbConnection: $dbConnection,
+                connection: $connection,
                 key: $key,
                 level: $level,
                 accessMode: $accessMode,
@@ -226,7 +206,7 @@ final class PostgresAdvisoryLocker
     }
 
     private function tryAcquireLock(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         PostgresLockLevelEnum $level,
         PostgresLockAccessModeEnum $accessMode,
@@ -246,19 +226,14 @@ final class PostgresAdvisoryLocker
         };
         $sql .= " -- $key->humanReadableValue";
 
-        $statement = $dbConnection->prepare($sql);
-        $statement->execute(
-            [
-                'class_id' => $key->classId,
-                'object_id' => $key->objectId,
-            ],
-        );
-
-        return $statement->fetchColumn(0);
+        return $connection->fetchColumn($sql, [
+            'class_id' => $key->classId,
+            'object_id' => $key->objectId,
+        ]);
     }
 
     private function acquireLockWithTimeout(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         PostgresLockKey $key,
         PostgresLockLevelEnum $level,
         PostgresLockAccessModeEnum $accessMode,
@@ -281,13 +256,13 @@ final class PostgresAdvisoryLocker
 
         return match ($level) {
             PostgresLockLevelEnum::Transaction => $this->acquireTransactionLockWithTimeout(
-                dbConnection: $dbConnection,
+                connection: $connection,
                 sql: $sql,
                 key: $key,
                 timeoutDuration: $timeoutDuration,
             ),
             PostgresLockLevelEnum::Session => $this->acquireSessionLockWithTimeout(
-                dbConnection: $dbConnection,
+                connection: $connection,
                 sql: $sql,
                 key: $key,
                 timeoutDuration: $timeoutDuration,
@@ -295,46 +270,65 @@ final class PostgresAdvisoryLocker
         };
     }
 
-    private function assertPdoExceptionMode(PDO $dbConnection): void
+    /**
+     * Check if an exception indicates a PostgreSQL lock_not_available error.
+     *
+     * This method supports multiple exception types:
+     * - PDOException: SQLSTATE in getCode()
+     * - Doctrine\DBAL\Exception: SQLSTATE in getSQLState()
+     * - Cycle\Database\Exception: wraps PDOException as previous exception
+     *
+     * @param \Throwable $exception Exception to inspect
+     * @return bool True if SQLSTATE is '55P03' (lock_not_available)
+     */
+    private function isLockNotAvailable(\Throwable $exception): bool
     {
-        if ((int) $dbConnection->getAttribute(PDO::ATTR_ERRMODE) !== PDO::ERRMODE_EXCEPTION) {
-            throw new \LogicException(
-                'PDO connection must use PDO::ERRMODE_EXCEPTION. '
-                . 'Set it via: $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION)',
-            );
+        // PDOException: getCode() returns SQLSTATE string
+        if ($exception instanceof \PDOException) {
+            return $exception->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
         }
+
+        // Doctrine\DBAL\Exception: getSQLState() method
+        if (method_exists($exception, 'getSQLState')) {
+            return $exception->getSQLState() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
+        }
+
+        // Cycle StatementException: wraps PDOException as previous
+        $previous = $exception->getPrevious();
+        if ($previous instanceof \PDOException) {
+            return $previous->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
+        }
+
+        return false;
     }
 
     private function acquireTransactionLockWithTimeout(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         string $sql,
         PostgresLockKey $key,
         TimeoutDuration $timeoutDuration,
     ): bool {
         $timeoutMs = $timeoutDuration->toMilliseconds();
-        $dbConnection->exec("SET LOCAL lock_timeout = '$timeoutMs'");
+        $connection->execute("SET LOCAL lock_timeout = '$timeoutMs'");
 
         /**
          * Use a savepoint so that a lock_timeout error does not abort the entire transaction.
          * PostgreSQL handles same-name savepoints as a stack, so nested calls are safe.
          */
-        $dbConnection->exec('SAVEPOINT _lock_timeout_savepoint');
+        $connection->execute('SAVEPOINT _lock_timeout_savepoint');
 
         try {
-            $statement = $dbConnection->prepare($sql);
-            $statement->execute(
-                [
-                    'class_id' => $key->classId,
-                    'object_id' => $key->objectId,
-                ],
-            );
+            $connection->execute($sql, [
+                'class_id' => $key->classId,
+                'object_id' => $key->objectId,
+            ]);
 
-            $dbConnection->exec('RELEASE SAVEPOINT _lock_timeout_savepoint');
+            $connection->execute('RELEASE SAVEPOINT _lock_timeout_savepoint');
 
             return true;
-        } catch (\PDOException $exception) {
-            if ($exception->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE) {
-                $dbConnection->exec('ROLLBACK TO SAVEPOINT _lock_timeout_savepoint');
+        } catch (\Throwable $exception) {
+            if ($this->isLockNotAvailable($exception)) {
+                $connection->execute('ROLLBACK TO SAVEPOINT _lock_timeout_savepoint');
 
                 return false;
             }
@@ -344,35 +338,31 @@ final class PostgresAdvisoryLocker
     }
 
     private function acquireSessionLockWithTimeout(
-        PDO $dbConnection,
+        ConnectionAdapterInterface $connection,
         string $sql,
         PostgresLockKey $key,
         TimeoutDuration $timeoutDuration,
     ): bool {
         $timeoutMs = $timeoutDuration->toMilliseconds();
-        $statement = $dbConnection->query('SHOW lock_timeout');
-        $originalLockTimeout = $statement->fetchColumn(0);
-        $dbConnection->exec("SET lock_timeout = '$timeoutMs'");
+        $originalLockTimeout = $connection->fetchColumn('SHOW lock_timeout');
+        $connection->execute("SET lock_timeout = '$timeoutMs'");
 
         try {
-            $statement = $dbConnection->prepare($sql);
-            $statement->execute(
-                [
-                    'class_id' => $key->classId,
-                    'object_id' => $key->objectId,
-                ],
-            );
+            $connection->execute($sql, [
+                'class_id' => $key->classId,
+                'object_id' => $key->objectId,
+            ]);
 
             return true;
-        } catch (\PDOException $exception) {
-            if ($exception->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE) {
+        } catch (\Throwable $exception) {
+            if ($this->isLockNotAvailable($exception)) {
                 return false;
             }
 
             throw $exception;
         }
         finally {
-            $dbConnection->exec("SET lock_timeout = '$originalLockTimeout'");
+            $connection->execute("SET lock_timeout = '$originalLockTimeout'");
         }
     }
 }
