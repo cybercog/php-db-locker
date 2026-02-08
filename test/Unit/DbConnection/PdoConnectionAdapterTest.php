@@ -11,9 +11,9 @@
 
 declare(strict_types=1);
 
-namespace Cog\Test\DbLocker\Unit\Connection;
+namespace Cog\Test\DbLocker\Unit\DbConnection;
 
-use Cog\DbLocker\Connection\PdoConnectionAdapter;
+use Cog\DbLocker\DbConnection\PdoConnectionAdapter;
 use PDO;
 use PHPUnit\Framework\TestCase;
 

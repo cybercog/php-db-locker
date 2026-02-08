@@ -26,7 +26,7 @@ final class SessionLevelLockHandle
     private bool $isReleased = false;
 
     public function __construct(
-        private readonly ConnectionAdapterInterface $connection,
+        private readonly ConnectionAdapterInterface $dbConnection,
         private readonly PostgresAdvisoryLocker $locker,
         public readonly PostgresLockKey $lockKey,
         public readonly PostgresLockAccessModeEnum $accessMode,
@@ -48,7 +48,7 @@ final class SessionLevelLockHandle
         }
 
         $wasReleased = $this->locker->releaseSessionLevelLock(
-            $this->connection,
+            $this->dbConnection,
             $this->lockKey,
             $this->accessMode,
         );

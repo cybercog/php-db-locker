@@ -13,7 +13,7 @@ declare(strict_types=1);
 
 namespace Cog\Test\DbLocker\Integration;
 
-use Cog\DbLocker\Connection\PdoConnectionAdapter;
+use Cog\DbLocker\DbConnection\PdoConnectionAdapter;
 use Cog\DbLocker\ConnectionAdapterInterface;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\PostgresLockKey;

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Cog\DbLocker\Connection;
+namespace Cog\DbLocker\DbConnection;
 
 use Cog\DbLocker\ConnectionAdapterInterface;
 use PDO;

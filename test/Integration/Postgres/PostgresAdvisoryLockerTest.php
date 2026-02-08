@@ -17,7 +17,7 @@ use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\PostgresAdvisoryLocker;
 use Cog\DbLocker\Postgres\PostgresLockKey;
 use Cog\DbLocker\TimeoutDuration;
-use Cog\DbLocker\Connection\PdoConnectionAdapter;
+use Cog\DbLocker\DbConnection\PdoConnectionAdapter;
 use Cog\Test\DbLocker\Integration\AbstractIntegrationTestCase;
 use PHPUnit\Framework\Attributes\DataProvider;
 
