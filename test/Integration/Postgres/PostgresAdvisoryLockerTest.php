@@ -551,7 +551,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $lockKey4);
     }
 
-    public function testItThrowsExceptionWhenPdoErrorModeIsNotException(): void
+    public function testItThrowsExceptionWhenPdoErrorModeIsNotExceptionForAcquireSessionLevelLock(): void
     {
         // GIVEN: A PDO connection with silent error mode (not ERRMODE_EXCEPTION)
         $locker = $this->initLocker();
@@ -559,7 +559,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
         $lockKey = PostgresLockKey::create('test');
 
-        // WHEN: Attempting to acquire a lock with non-exception error mode
+        // WHEN: Attempting to acquire a session-level lock with non-exception error mode
         // THEN: Should throw LogicException requiring ERRMODE_EXCEPTION
         $this->expectException(\LogicException::class);
         $this->expectExceptionMessage('PDO connection must use PDO::ERRMODE_EXCEPTION');
@@ -568,6 +568,105 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $dbConnection,
             $lockKey,
             TimeoutDuration::zero(),
+        );
+    }
+
+    public function testItThrowsExceptionWhenPdoErrorModeIsNotExceptionForAcquireTransactionLevelLock(): void
+    {
+        // GIVEN: A PDO connection with silent error mode (not ERRMODE_EXCEPTION)
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
+        $lockKey = PostgresLockKey::create('test');
+        $dbConnection->beginTransaction();
+
+        // WHEN: Attempting to acquire a transaction-level lock with non-exception error mode
+        // THEN: Should throw LogicException requiring ERRMODE_EXCEPTION
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('PDO connection must use PDO::ERRMODE_EXCEPTION');
+
+        $locker->acquireTransactionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+    }
+
+    public function testItThrowsExceptionWhenPdoErrorModeIsNotExceptionForWithinSessionLevelLock(): void
+    {
+        // GIVEN: A PDO connection with silent error mode (not ERRMODE_EXCEPTION)
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
+        $lockKey = PostgresLockKey::create('test');
+
+        // WHEN: Attempting to use withinSessionLevelLock with non-exception error mode
+        // THEN: Should throw LogicException requiring ERRMODE_EXCEPTION
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('PDO connection must use PDO::ERRMODE_EXCEPTION');
+
+        $locker->withinSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            function () {
+                return true;
+            },
+            TimeoutDuration::zero(),
+        );
+    }
+
+    public function testItThrowsExceptionWhenPdoErrorModeIsNotExceptionForReleaseSessionLevelLock(): void
+    {
+        // GIVEN: A PDO connection with a lock acquired, then error mode changed to silent
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        
+        // First acquire the lock with proper error mode
+        $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+        
+        // Then change to silent mode
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
+
+        // WHEN: Attempting to release the lock with non-exception error mode
+        // THEN: Should throw LogicException requiring ERRMODE_EXCEPTION
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('PDO connection must use PDO::ERRMODE_EXCEPTION');
+
+        $locker->releaseSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+        );
+    }
+
+    public function testItThrowsExceptionWhenPdoErrorModeIsNotExceptionForReleaseAllSessionLevelLocks(): void
+    {
+        // GIVEN: A PDO connection with a lock acquired, then error mode changed to silent
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $lockKey = PostgresLockKey::create('test');
+        
+        // First acquire the lock with proper error mode
+        $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+        
+        // Then change to silent mode
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
+
+        // WHEN: Attempting to release all locks with non-exception error mode
+        // THEN: Should throw LogicException requiring ERRMODE_EXCEPTION
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('PDO connection must use PDO::ERRMODE_EXCEPTION');
+
+        $locker->releaseAllSessionLevelLocks(
+            $dbConnection,
         );
     }
 
