@@ -38,6 +38,7 @@ composer require cybercog/php-db-locker
 
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
+$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
@@ -103,6 +104,7 @@ Callback API
 
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
+$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
@@ -130,6 +132,7 @@ Low-level API
 
 ```php
 $dbConnection = new PDO($dsn, $username, $password);
+$dbConnection->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 $locker = new \Cog\DbLocker\Postgres\PostgresAdvisoryLocker();
 $lockKey = \Cog\DbLocker\Postgres\PostgresLockKey::create(
