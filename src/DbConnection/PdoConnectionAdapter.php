@@ -19,6 +19,8 @@ use PDO;
  */
 final class PdoConnectionAdapter implements ConnectionAdapterInterface
 {
+    private const PG_SQLSTATE_LOCK_NOT_AVAILABLE = '55P03';
+
     public function __construct(
         private readonly PDO $pdo,
     ) {
@@ -58,7 +60,7 @@ final class PdoConnectionAdapter implements ConnectionAdapterInterface
     {
         // PDOException: getCode() returns SQLSTATE string
         if ($exception instanceof \PDOException) {
-            return $exception->getCode() === '55P03';
+            return $exception->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
         }
 
         return false;
