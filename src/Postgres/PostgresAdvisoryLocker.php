@@ -22,8 +22,6 @@ use Cog\DbLocker\TimeoutDuration;
 
 final class PostgresAdvisoryLocker
 {
-    private const PG_SQLSTATE_LOCK_NOT_AVAILABLE = '55P03';
-
     /**
      * Acquire a transaction-level advisory lock with configurable timeout and access mode.
      *
@@ -270,37 +268,7 @@ final class PostgresAdvisoryLocker
         };
     }
 
-    /**
-     * Check if an exception indicates a PostgreSQL lock_not_available error.
-     *
-     * This method supports multiple exception types:
-     * - PDOException: SQLSTATE in getCode()
-     * - Doctrine\DBAL\Exception: SQLSTATE in getSQLState()
-     * - Cycle\Database\Exception: wraps PDOException as previous exception
-     *
-     * @param \Throwable $exception Exception to inspect
-     * @return bool True if SQLSTATE is '55P03' (lock_not_available)
-     */
-    private function isLockNotAvailable(\Throwable $exception): bool
-    {
-        // PDOException: getCode() returns SQLSTATE string
-        if ($exception instanceof \PDOException) {
-            return $exception->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
-        }
 
-        // Doctrine\DBAL\Exception: getSQLState() method
-        if (method_exists($exception, 'getSQLState')) {
-            return $exception->getSQLState() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
-        }
-
-        // Cycle StatementException: wraps PDOException as previous
-        $previous = $exception->getPrevious();
-        if ($previous instanceof \PDOException) {
-            return $previous->getCode() === self::PG_SQLSTATE_LOCK_NOT_AVAILABLE;
-        }
-
-        return false;
-    }
 
     private function acquireTransactionLockWithTimeout(
         ConnectionAdapterInterface $dbConnection,
@@ -327,7 +295,7 @@ final class PostgresAdvisoryLocker
 
             return true;
         } catch (\Throwable $exception) {
-            if ($this->isLockNotAvailable($exception)) {
+            if ($dbConnection->isLockNotAvailable($exception)) {
                 $dbConnection->execute('ROLLBACK TO SAVEPOINT _lock_timeout_savepoint');
 
                 return false;
@@ -355,7 +323,7 @@ final class PostgresAdvisoryLocker
 
             return true;
         } catch (\Throwable $exception) {
-            if ($this->isLockNotAvailable($exception)) {
+            if ($dbConnection->isLockNotAvailable($exception)) {
                 return false;
             }
 

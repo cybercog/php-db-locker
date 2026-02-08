@@ -159,4 +159,61 @@ final class PdoConnectionAdapterTest extends TestCase
         // THEN: Returns false
         $this->assertFalse($result);
     }
+
+    public function testIsLockNotAvailableReturnsTrueForPdoExceptionWith55P03(): void
+    {
+        // GIVEN: A PDO connection and a PDOException with SQLSTATE 55P03
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('getAttribute')->willReturn(PDO::ERRMODE_EXCEPTION);
+        $adapter = new PdoConnectionAdapter($pdo);
+
+        $exception = new \PDOException('Lock timeout');
+        // Set the SQLSTATE code via reflection since PDOException doesn't allow setting it directly
+        $reflection = new \ReflectionClass($exception);
+        $property = $reflection->getProperty('code');
+        $property->setAccessible(true);
+        $property->setValue($exception, '55P03');
+
+        // WHEN: Checking if exception is lock_not_available
+        $result = $adapter->isLockNotAvailable($exception);
+
+        // THEN: Returns true
+        $this->assertTrue($result);
+    }
+
+    public function testIsLockNotAvailableReturnsFalseForPdoExceptionWithDifferentCode(): void
+    {
+        // GIVEN: A PDO connection and a PDOException with different SQLSTATE
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('getAttribute')->willReturn(PDO::ERRMODE_EXCEPTION);
+        $adapter = new PdoConnectionAdapter($pdo);
+
+        $exception = new \PDOException('Different error');
+        $reflection = new \ReflectionClass($exception);
+        $property = $reflection->getProperty('code');
+        $property->setAccessible(true);
+        $property->setValue($exception, '23505'); // Unique violation
+
+        // WHEN: Checking if exception is lock_not_available
+        $result = $adapter->isLockNotAvailable($exception);
+
+        // THEN: Returns false
+        $this->assertFalse($result);
+    }
+
+    public function testIsLockNotAvailableReturnsFalseForNonPdoException(): void
+    {
+        // GIVEN: A PDO connection and a non-PDO exception
+        $pdo = $this->createMock(PDO::class);
+        $pdo->method('getAttribute')->willReturn(PDO::ERRMODE_EXCEPTION);
+        $adapter = new PdoConnectionAdapter($pdo);
+
+        $exception = new \RuntimeException('Some other error');
+
+        // WHEN: Checking if exception is lock_not_available
+        $result = $adapter->isLockNotAvailable($exception);
+
+        // THEN: Returns false
+        $this->assertFalse($result);
+    }
 }

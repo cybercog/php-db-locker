@@ -56,4 +56,17 @@ interface ConnectionAdapterInterface
      * @return bool True if a transaction is active, false otherwise
      */
     public function isTransactionActive(): bool;
+
+    /**
+     * Check if an exception indicates a PostgreSQL lock_not_available error (SQLSTATE 55P03).
+     *
+     * Different database adapters throw different exception types:
+     * - PDO: \PDOException with SQLSTATE in getCode()
+     * - Doctrine DBAL: Doctrine\DBAL\Exception with getSQLState() method
+     * - Cycle ORM: wraps \PDOException in its own exception
+     *
+     * @param \Throwable $exception Exception to inspect
+     * @return bool True if the exception indicates a lock timeout (SQLSTATE 55P03)
+     */
+    public function isLockNotAvailable(\Throwable $exception): bool;
 }
