@@ -33,7 +33,7 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
         // WHEN: Creating a PostgresLockKey from the namespace and value
         $lockKey = PostgresLockKey::create($key, $value);
 
-        // THEN: Lock key should have the expected classId and objectId generated via CRC32 hash
+        // THEN: Lock key should have the expected classId and objectId generated via xxh3 hash
         $this->assertSame($expectedClassId, $lockKey->classId);
         $this->assertSame($expectedObjectId, $lockKey->objectId);
     }
@@ -44,14 +44,14 @@ final class PostgresLockKeyTest extends AbstractUnitTestCase
             'key + empty value' => [
                 'test',
                 '',
-                -662733300,
-                0,
+                1933805137,
+                1940164458,
             ],
             'key + value' => [
                 'test',
                 '1',
-                -662733300,
-                -2082672713,
+                1454951023,
+                1735669873,
             ],
         ];
     }
