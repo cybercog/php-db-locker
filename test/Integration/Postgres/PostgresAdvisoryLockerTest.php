@@ -621,14 +621,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
-        
+
         // First acquire the lock with proper error mode
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
             TimeoutDuration::zero(),
         );
-        
+
         // Then change to silent mode
         $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
 
@@ -649,14 +649,14 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $locker = $this->initLocker();
         $dbConnection = $this->initPostgresPdoConnection();
         $lockKey = PostgresLockKey::create('test');
-        
+
         // First acquire the lock with proper error mode
         $locker->acquireSessionLevelLock(
             $dbConnection,
             $lockKey,
             TimeoutDuration::zero(),
         );
-        
+
         // Then change to silent mode
         $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
 
