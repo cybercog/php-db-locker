@@ -83,15 +83,26 @@ final class PostgresAdvisoryLocker
             accessMode: $accessMode,
         );
 
+        $exception = null;
         try {
             return $callback($lockHandle);
-        }
-        finally {
-            $this->releaseSessionLevelLock(
-                dbConnection: $dbConnection,
-                key: $key,
-                accessMode: $accessMode,
-            );
+        } catch (\Throwable $e) {
+            $exception = $e;
+            throw $e;
+        } finally {
+            if ($lockHandle->wasAcquired) {
+                try {
+                    $this->releaseSessionLevelLock(
+                        dbConnection: $dbConnection,
+                        key: $key,
+                        accessMode: $accessMode,
+                    );
+                } catch (\Throwable $releaseException) {
+                    if ($exception === null) {
+                        throw $releaseException;
+                    }
+                }
+            }
         }
     }
 
