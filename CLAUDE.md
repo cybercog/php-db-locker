@@ -73,6 +73,7 @@ Design decisions are documented in `adr/` — consult these before changing hash
 - All classes use `declare(strict_types=1)`
 - **Abstract classes** must be prefixed with `Abstract` (e.g., `AbstractLockException`, `AbstractIntegrationTestCase`)
 - SQL comments with `humanReadableValue` appended to lock queries for debugging — these must be sanitized to prevent SQL comment injection (see `sanitizeSqlComment()`)
+- **DocBlock formatting**: Always separate `@throws` tags from other tags (like `@param`, `@return`) with a blank line for better readability
 
 ## Git Workflow
 

@@ -29,6 +29,7 @@ final class PostgresAdvisoryLocker
      *
      * @param TimeoutDuration $timeoutDuration Maximum wait time. Use TimeoutDuration::zero() for an immediate (non-blocking) attempt.
      * @return TransactionLevelLockHandle Handle with wasAcquired=false if lock is held by another process (normal competition).
+     *
      * @throws LockAcquireException If a database error occurs (connection failures, query errors, etc.). NOT thrown for normal lock contention.
      * @throws \LogicException If attempting to acquire outside of an active transaction.
      */
@@ -67,6 +68,7 @@ final class PostgresAdvisoryLocker
      * @param callable(SessionLevelLockHandle): TReturn $callback A callback that receives the lock handle.
      * @param TimeoutDuration $timeoutDuration Maximum wait time. Use TimeoutDuration::zero() for an immediate (non-blocking) attempt.
      * @return TReturn The return value of the callback.
+     *
      * @throws LockAcquireException If a database error occurs during lock acquisition. NOT thrown for normal lock contention.
      * @throws LockReleaseException If a database error occurs during lock release (only thrown if no other exception occurred during callback execution).
      *
@@ -125,6 +127,7 @@ final class PostgresAdvisoryLocker
      *
      * @param TimeoutDuration $timeoutDuration Maximum wait time. Use TimeoutDuration::zero() for an immediate (non-blocking) attempt.
      * @return SessionLevelLockHandle Handle with wasAcquired=false if lock is held by another process (normal competition).
+     *
      * @throws LockAcquireException If a database error occurs (connection failures, query errors, etc.). NOT thrown for normal lock contention.
      *
      * @see acquireTransactionLevelLock() for preferred locking strategy.
@@ -155,6 +158,7 @@ final class PostgresAdvisoryLocker
      * Release session level advisory lock.
      *
      * @return bool True if the lock was successfully released, false if it was not held by this session.
+     *
      * @throws LockReleaseException If a database error occurs during release.
      */
     public function releaseSessionLevelLock(

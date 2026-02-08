@@ -29,6 +29,7 @@ interface ConnectionAdapterInterface
      * @param string $sql SQL query with named parameters (e.g., :class_id)
      * @param array<string, mixed> $params Named parameters (e.g., ['class_id' => 1, 'object_id' => 2])
      * @return mixed The value of the first column (typically bool or string)
+     *
      * @throws \Throwable Database-specific exception on error
      */
     public function fetchColumn(string $sql, array $params = []): mixed;
@@ -44,6 +45,7 @@ interface ConnectionAdapterInterface
      *
      * @param string $sql SQL statement with optional named parameters
      * @param array<string, mixed> $params Named parameters (e.g., ['class_id' => 1])
+     *
      * @throws \Throwable Database-specific exception on error
      */
     public function execute(string $sql, array $params = []): void;
