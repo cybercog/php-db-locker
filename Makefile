@@ -1,4 +1,4 @@
-DOCKER-APP-EXEC = docker exec -it php-db-locker-app /bin/sh -c
+DOCKER-APP-EXEC = docker exec php-db-locker-app /bin/sh -c
 
 ssh: ## Connect to containers via SSH
 	docker exec -it php-db-locker-app /bin/sh
