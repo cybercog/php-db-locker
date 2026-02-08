@@ -180,7 +180,7 @@ final class PostgresAdvisoryLocker
                 'class_id' => $key->classId,
                 'object_id' => $key->objectId,
             ]);
-        } catch (\Throwable $exception) {
+        } catch (\Exception $exception) {
             throw LockReleaseException::fromDatabaseError($key, $exception);
         }
     }
@@ -249,7 +249,7 @@ final class PostgresAdvisoryLocker
                 'class_id' => $key->classId,
                 'object_id' => $key->objectId,
             ]);
-        } catch (\Throwable $exception) {
+        } catch (\Exception $exception) {
             throw LockAcquireException::fromDatabaseError($key, $exception);
         }
     }
@@ -319,7 +319,7 @@ final class PostgresAdvisoryLocker
                 $dbConnection->execute('RELEASE SAVEPOINT _lock_timeout_savepoint');
 
                 return true;
-            } catch (\Throwable $exception) {
+            } catch (\Exception $exception) {
                 if ($dbConnection->isLockNotAvailable($exception)) {
                     $dbConnection->execute('ROLLBACK TO SAVEPOINT _lock_timeout_savepoint');
 
@@ -328,7 +328,7 @@ final class PostgresAdvisoryLocker
 
                 throw $exception;
             }
-        } catch (\Throwable $exception) {
+        } catch (\Exception $exception) {
             throw LockAcquireException::fromDatabaseError($key, $exception);
         }
     }
@@ -351,7 +351,7 @@ final class PostgresAdvisoryLocker
                 ]);
 
                 return true;
-            } catch (\Throwable $exception) {
+            } catch (\Exception $exception) {
                 if ($dbConnection->isLockNotAvailable($exception)) {
                     return false;
                 }
@@ -361,7 +361,7 @@ final class PostgresAdvisoryLocker
             finally {
                 $dbConnection->execute("SET lock_timeout = '$originalLockTimeout'");
             }
-        } catch (\Throwable $exception) {
+        } catch (\Exception $exception) {
             throw LockAcquireException::fromDatabaseError($key, $exception);
         }
     }

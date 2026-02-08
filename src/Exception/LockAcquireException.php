@@ -30,7 +30,7 @@ final class LockAcquireException extends AbstractLockException
 {
     public static function fromDatabaseError(
         PostgresLockKey $key,
-        \Throwable $previous,
+        \Exception $previous,
     ): self {
         return new self(
             message: "Failed to acquire lock for key `{$key->humanReadableValue}`: {$previous->getMessage()}",

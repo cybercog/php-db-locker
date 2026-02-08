@@ -144,17 +144,13 @@ final class PostgresAdvisoryLockerExceptionTest extends AbstractIntegrationTestC
             public function fetchColumn(string $sql, array $params = []): mixed
             {
                 // Simulate a database error (not lock_not_available)
-                $exception = new \PDOException('Connection lost');
-                $exception->code = '08006';
-                throw $exception;
+                throw new \PDOException('Connection lost');
             }
 
             public function execute(string $sql, array $params = []): void
             {
                 // Simulate a database error
-                $exception = new \PDOException('Connection lost');
-                $exception->code = '08006';
-                throw $exception;
+                throw new \PDOException('Connection lost');
             }
 
             public function isTransactionActive(): bool
@@ -162,7 +158,7 @@ final class PostgresAdvisoryLockerExceptionTest extends AbstractIntegrationTestC
                 return true;
             }
 
-            public function isLockNotAvailable(\Throwable $exception): bool
+            public function isLockNotAvailable(\Exception $exception): bool
             {
                 // This mock returns false to ensure the exception is NOT treated as lock_not_available
                 return false;

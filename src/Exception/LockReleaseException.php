@@ -27,7 +27,7 @@ final class LockReleaseException extends AbstractLockException
 {
     public static function fromDatabaseError(
         PostgresLockKey $key,
-        \Throwable $previous,
+        \Exception $previous,
     ): self {
         return new self(
             message: "Failed to release lock for key `{$key->humanReadableValue}`: {$previous->getMessage()}",
