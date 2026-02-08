@@ -551,6 +551,26 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection2, $lockKey4);
     }
 
+    public function testItThrowsExceptionWhenPdoErrorModeIsNotException(): void
+    {
+        // GIVEN: A PDO connection with silent error mode (not ERRMODE_EXCEPTION)
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_SILENT);
+        $lockKey = PostgresLockKey::create('test');
+
+        // WHEN: Attempting to acquire a lock with non-exception error mode
+        // THEN: Should throw LogicException requiring ERRMODE_EXCEPTION
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage('PDO connection must use PDO::ERRMODE_EXCEPTION');
+
+        $locker->acquireSessionLevelLock(
+            $dbConnection,
+            $lockKey,
+            TimeoutDuration::zero(),
+        );
+    }
+
     public function testItCannotAcquireLockWithinTransactionNotInTransaction(): void
     {
         // GIVEN: A database connection without an active transaction

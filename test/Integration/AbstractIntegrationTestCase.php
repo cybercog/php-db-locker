@@ -39,6 +39,9 @@ abstract class AbstractIntegrationTestCase extends TestCase
             'pgsql:' . $dsn,
             getenv('DB_POSTGRES_USERNAME'),
             getenv('DB_POSTGRES_PASSWORD'),
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+            ],
         );
     }
 
