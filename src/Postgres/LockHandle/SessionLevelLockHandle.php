@@ -13,10 +13,10 @@ declare(strict_types=1);
 
 namespace Cog\DbLocker\Postgres\LockHandle;
 
+use Cog\DbLocker\ConnectionAdapterInterface;
 use Cog\DbLocker\Postgres\Enum\PostgresLockAccessModeEnum;
 use Cog\DbLocker\Postgres\PostgresAdvisoryLocker;
 use Cog\DbLocker\Postgres\PostgresLockKey;
-use PDO;
 
 /**
  * @internal
@@ -26,7 +26,7 @@ final class SessionLevelLockHandle
     private bool $isReleased = false;
 
     public function __construct(
-        private readonly PDO $dbConnection,
+        private readonly ConnectionAdapterInterface $dbConnection,
         private readonly PostgresAdvisoryLocker $locker,
         public readonly PostgresLockKey $lockKey,
         public readonly PostgresLockAccessModeEnum $accessMode,
