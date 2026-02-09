@@ -73,6 +73,9 @@ final class PostgresAdvisoryLocker
      *
      * @throws LockAcquireException If a database error occurs during lock acquisition. NOT thrown for normal lock contention.
      * @throws LockReleaseException If a database error occurs during lock release (only thrown if no other exception occurred during callback execution).
+     *     ⚠️ A LockReleaseException guarantees that the callback has completed successfully,
+     *     but the callback's return value is lost. If you need access to the callback result
+     *     in this scenario, use acquireSessionLevelLock() / releaseSessionLevelLock() directly.
      *
      * @see acquireTransactionLevelLock() for preferred locking strategy.
      *
