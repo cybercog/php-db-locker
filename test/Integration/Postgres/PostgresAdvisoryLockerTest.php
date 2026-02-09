@@ -942,6 +942,39 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
     }
 
+    public function testWithinSessionLevelLockLosesCallbackResultWhenReleaseFails(): void
+    {
+        // GIVEN: A session-level lock acquired via withinSessionLevelLock callback
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $lockKey = PostgresLockKey::create('test');
+
+        // WHEN: Callback succeeds with a result but connection is killed before release
+        try {
+            $locker->withinSessionLevelLock(
+                new PdoConnectionAdapter($dbConnection),
+                $lockKey,
+                function () use ($dbConnection): string {
+                    // Kill own connection's backend to make release fail
+                    $pid = $dbConnection->pgsqlGetPid();
+                    $killerConnection = $this->initPostgresPdoConnection();
+                    $killerConnection->exec("SELECT PG_TERMINATE_BACKEND($pid)");
+
+                    return 'important-result';
+                },
+                TimeoutDuration::zero(),
+            );
+            $this->fail('Expected LockReleaseException was not thrown');
+        } catch (\Cog\DbLocker\Exception\LockReleaseException $e) {
+            // THEN: LockReleaseException is thrown (guaranteeing callback succeeded)
+            $this->assertStringContainsString('Failed to release lock', $e->getMessage());
+            // THEN: But the callback result is lost - this is a known limitation documented in ADR-003
+        } catch (\Throwable $e) {
+            $this->fail('Expected LockReleaseException but got: ' . get_class($e) . ' - ' . $e->getMessage());
+        }
+    }
+
     public function testItSanitizesCommentToPreventSqlInjection(): void
     {
         // GIVEN: A lock key with newline that could break SQL comment and inject code
