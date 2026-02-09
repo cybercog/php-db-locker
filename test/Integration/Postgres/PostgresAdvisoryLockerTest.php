@@ -843,7 +843,7 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         $y = 3;
 
         // WHEN: Executing code within a session-level lock using callback
-        $result = $locker->withinSessionLevelLock(
+        $handle = $locker->withinSessionLevelLock(
             new PdoConnectionAdapter($dbConnection),
             $lockKey,
             function () use ($dbConnection, $lockKey, $accessMode, $x, $y): int {
@@ -857,7 +857,8 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
         );
 
         // THEN: Callback should execute successfully and lock should be auto-released
-        $this->assertSame(5, $result);
+        $this->assertTrue($handle->wasAcquired);
+        $this->assertSame(5, $handle->result);
         $this->assertPgAdvisoryLocksCount(0);
         $this->assertPgAdvisoryLockMissingInConnection($dbConnection, $lockKey);
     }
@@ -902,11 +903,13 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             // THEN: The original exception from callback should be preserved, not masked by release failure
             $this->assertSame('Original error from callback', $e->getMessage());
         } catch (\PDOException $e) {
-            $this->fail('PDOException from release should not mask the original RuntimeException: ' . $e->getMessage());
+            $this->fail(
+                'PDOException from release should not mask the original RuntimeException: ' . $e->getMessage(),
+            );
         }
     }
 
-    public function testWithinSessionLevelLockDoesNotReleaseWhenLockWasNotAcquired(): void
+    public function testWithinSessionLevelLockDoesNotCallCallbackWhenLockWasNotAcquired(): void
     {
         // GIVEN: A lock already held by another connection so the second cannot acquire it
         $locker = $this->initLocker();
@@ -918,20 +921,58 @@ final class PostgresAdvisoryLockerTest extends AbstractIntegrationTestCase
             $lockKey,
             TimeoutDuration::zero(),
         );
+        $callbackExecuted = false;
 
         // WHEN: withinSessionLevelLock is called on second connection (lock not acquired)
-        $locker->withinSessionLevelLock(
+        $handle = $locker->withinSessionLevelLock(
             new PdoConnectionAdapter($dbConnection2),
             $lockKey,
-            function ($lockHandle): void {
-                $this->assertFalse($lockHandle->wasAcquired);
+            function () use (&$callbackExecuted): void {
+                $callbackExecuted = true;
             },
             TimeoutDuration::zero(),
         );
 
+        // THEN: Callback should not be called, handle should indicate lock was not acquired
+        $this->assertFalse($handle->wasAcquired);
+        $this->assertNull($handle->result);
+        $this->assertFalse($callbackExecuted);
         // THEN: The first connection's lock should still be intact (not decremented by a spurious release)
         $this->assertPgAdvisoryLocksCount(1);
         $this->assertPgAdvisoryLockExistsInConnection($dbConnection1, $lockKey);
+    }
+
+    public function testWithinSessionLevelLockLosesCallbackResultWhenReleaseFails(): void
+    {
+        // GIVEN: A session-level lock acquired via withinSessionLevelLock callback
+        $locker = $this->initLocker();
+        $dbConnection = $this->initPostgresPdoConnection();
+        $dbConnection->setAttribute(\PDO::ATTR_ERRMODE, \PDO::ERRMODE_EXCEPTION);
+        $lockKey = PostgresLockKey::create('test');
+
+        // WHEN: Callback succeeds with a result but connection is killed before release
+        try {
+            $locker->withinSessionLevelLock(
+                new PdoConnectionAdapter($dbConnection),
+                $lockKey,
+                function () use ($dbConnection): string {
+                    // Kill own connection's backend to make release fail
+                    $pid = $dbConnection->pgsqlGetPid();
+                    $killerConnection = $this->initPostgresPdoConnection();
+                    $killerConnection->exec("SELECT PG_TERMINATE_BACKEND($pid)");
+
+                    return 'important-result';
+                },
+                TimeoutDuration::zero(),
+            );
+            $this->fail('Expected LockReleaseException was not thrown');
+        } catch (\Cog\DbLocker\Exception\LockReleaseException $e) {
+            // THEN: LockReleaseException is thrown (guaranteeing callback succeeded)
+            $this->assertStringContainsString('Failed to release lock', $e->getMessage());
+            // THEN: But the callback result is lost - this is a known limitation documented in ADR-003
+        } catch (\Throwable $e) {
+            $this->fail('Expected LockReleaseException but got: ' . get_class($e) . ' - ' . $e->getMessage());
+        }
     }
 
     public function testItSanitizesCommentToPreventSqlInjection(): void

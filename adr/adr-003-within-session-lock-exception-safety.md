@@ -56,8 +56,17 @@ PHP sets `previous` only in the exception constructor — there is no `addPrevio
 
 The library has no logger dependency and adding one for a single edge case is not justified. Users who need visibility into release failures can wrap `withinSessionLevelLock` in their own try/catch or use `acquireSessionLevelLock` / `releaseSessionLevelLock` directly.
 
+## Known limitation: callback result is lost on release failure
+
+When the callback succeeds but `releaseSessionLevelLock()` throws, `LockReleaseException` is thrown and the callback's return value is discarded. The caller receives no indication of the callback result.
+
+This is a consequence of PHP's `finally` semantics — a `throw` in `finally` prevents the `try` block's `return` from completing. The `LockReleaseException` itself serves as a reliable signal that the callback completed successfully (it is only thrown when `$exception === null`), but the return value is not preserved.
+
+A future improvement could introduce a dedicated exception subclass (e.g. `WithinSessionLockReleaseException`) that carries the callback result. For now, users who need the callback result in this scenario should use `acquireSessionLevelLock()` / `releaseSessionLevelLock()` directly.
+
 ## Consequences
 
 - Original exceptions from user callbacks are never masked by release failures.
 - `PG_ADVISORY_UNLOCK` is not called when the lock was never acquired, preventing reentrant counter corruption.
 - Release failures are silently suppressed when a callback exception is already in flight — acceptable trade-off given no logger.
+- Callback return value is lost when release fails — acceptable trade-off; low-level API is available for callers who need it.
